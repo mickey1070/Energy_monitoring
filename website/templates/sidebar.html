@@ -1,0 +1,45 @@
+{% load static%}
+<link rel="stylesheet" href="{% static 'CSS/sidebar.css' %}" type="text/css" />
+<script src="{% static 'JavaScript/navbar.js' %}"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/boxicons@latest/css/boxicons.min.css">
+
+<body id="body-pd">
+    <header class="header" id="header">
+        <div class="header_toggle"> <i class='bx bx-menu' id="header-toggle"></i> </div>
+        <div class="header_img"> <img src="{% static 'Images/sidebar/327092.jpg' %}" alt=""> </div>
+    </header>
+    <div class="l-navbar" id="nav-bar">
+        <nav class="nav">
+            <div> 
+                </br>
+                </br>
+                <div class="nav_list"> 
+                    <a href="#" class="nav_link active"> 
+                        <img src="{% static 'Images/sidebar/Dashboard.png' %}" alt="Dashboard"> 
+                        <span class="nav_name">Dashboard</span> 
+                    </a> 
+                    <a href="#" class="nav_link"> 
+                        <img src="{% static 'Images/sidebar/Cost.png' %}" alt="Cost">  
+                        <span class="nav_name">Cost</span>
+                    </a> 
+                    <a href="#" class="nav_link"> 
+                        <img src="{% static 'Images/sidebar/Machine.png' %}" alt="Cost"> 
+                        <span class="nav_name">Machine</span> 
+                    </a> 
+                    <a href="#" class="nav_link"> 
+                        <img src="{% static 'Images/sidebar/Report.png' %}" alt="Report"> 
+                        <span class="nav_name">Report</span>
+                    </a> 
+                    <a href="#" class="nav_link"> <img src="{% static 'Images/sidebar/profile.png' %}" alt="Profile"> 
+                        <span class="nav_name">Profile</span> 
+                    </a> 
+                 </div>
+            </div> <a href="#" class="nav_link"> <img src="{% static 'Images/sidebar/SignOut.png' %}" alt="SignOut"> <span class="nav_name">SignOut</span> </a>
+        </nav>
+    </div>
+    <!--Container Main start
+    <div >
+        <h4>Main Components</h4>
+    </div>
+    Container Main end-->
