@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load static%}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'CSS/loginuser.css' %}" type="text/css" />
+  {% if user.is_authenticated %}
+<!--
+<h1>hello</h1>
+<p>
+    An important point that many people miss is that  can take either a string literal file name (i.e. "base.html") or a variable which resolves to a file name. We use this during development and change the value of on-the-fly. All of the primary templates (lists, detail, flat files, etc.) use very generic / semantic markup, and all the CSS/etc. is defined in the per-theme base file. E.g. themes/blue.html or themes/neon.html. – 
+    Peter Rowell
+     Feb 6, 2013 at 3:44
+    17
+    It's not very clear to me where these files must go. I want my base template inside PROJECT_ROOT/templates/base.html, so it is available to all apps. But now how can I reference it, given that the 'extend' statement looks for templates inside PROJECT_ROOT/app-name/templates/...? – 
+    jlh
+     Feb 13, 2015 at 10:56
+    1
+    @jlh: It worked for me when I put my templates in PROJECT_ROOT/project-name/templates/base.html – 
+    Andreas
+     Jan 30, 2016 at 14:16
+    1
+    @jih You can tell Django to look in PROJECT_ROOT/some_app/templates by editing the settings.py file - for example: 'DIRS': [os.path.join(BASE_DIR, "some_app", "templates")] – 
+    alex
+     Nov 18, 2018 at 18:54
+</p>
+-->
+{% else %}
+
+<div class="logo">
+  <img calss="logo" src="{% static 'Images/logo.png' %}" alt="logo">
+</div>
+<div class="glass_box"></div>
+<div class="circle1"></div>
+<div class="test"></div>
+<div class="circle3"></div>
+<h1>Username</h1>
+<h1 class="password">Password</h1>
+<div class="u_line"></div>
+<div class="p_line"></div>
+
+
+<div class="col-md-6 offset-md-3">
+
+
+<form method="POST" action="{% url 'login_user' %}">
+	{% csrf_token %}
+
+  <div class="mb-3">
+    <input type="text" class="form-control1" name="username", placeholder="Username" required>
+    
+  </div><br/>
+  <div class="mb-3">
+    <input type="password" class="form-control2" name="password", placeholder="Password" required>
+  </div>
+  <br/>
+  <button type="submit" class="login_btn">Login</button>
+  <a class="register" href="{% url 'register_user' %}">REGISTER</a>
+
+</form>
+
+
+
+{% endif %}
+
+
+
+{% endblock%}

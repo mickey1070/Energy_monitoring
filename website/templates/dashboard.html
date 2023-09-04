@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% load static%}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'CSS/dashboard.css' %}" type="text/css" />
+{% if user.is_authenticated %}
+<body>
+    <div class="daily"></div>
+</body>
+{% endif %}
+{% endblock%}

@@ -1,10 +1,11 @@
 {% load static%}
-<link rel="stylesheet" href="{% static 'CSS/sidebar.css' %}" type="text/css" />
+
+{% if user.is_authenticated %}
+<body id="body-pd">
+    <link rel="stylesheet" href="{% static 'CSS/sidebar.css' %}" type="text/css" />
 <script src="{% static 'JavaScript/navbar.js' %}"></script>
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/boxicons@latest/css/boxicons.min.css">
-
-<body id="body-pd">
     <header class="header" id="header">
         <div class="header_toggle"> <i class='bx bx-menu' id="header-toggle"></i> </div>
         <div class="header_img"> <img src="{% static 'Images/sidebar/327092.jpg' %}" alt=""> </div>
@@ -15,7 +16,7 @@
                 </br>
                 </br>
                 <div class="nav_list"> 
-                    <a href="#" class="nav_link active"> 
+                    <a href="{% url 'dashboard' %}" class="nav_link active"> 
                         <img src="{% static 'Images/sidebar/Dashboard.png' %}" alt="Dashboard"> 
                         <span class="nav_name">Dashboard</span> 
                     </a> 
@@ -35,11 +36,11 @@
                         <span class="nav_name">Profile</span> 
                     </a> 
                  </div>
-            </div> <a href="#" class="nav_link"> <img src="{% static 'Images/sidebar/SignOut.png' %}" alt="SignOut"> <span class="nav_name">SignOut</span> </a>
+            </div> <a href="{% url 'logout_user' %}" class="nav_link"> <img src="{% static 'Images/sidebar/SignOut.png' %}" alt="SignOut"> <span class="nav_name">SignOut</span> </a>
         </nav>
     </div>
     <!--Container Main start
     <div >
         <h4>Main Components</h4>
     </div>
-    Container Main end-->
+    Container Main end-->{% endif %}

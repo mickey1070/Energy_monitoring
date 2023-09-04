@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% load static%}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'CSS/register_user.css' %}" type="text/css" />
+<div class="logo">
+    <img calss="logo" src="{% static 'Images/logo.png' %}" alt="logo">
+</div>
+
+<div class="glass_box"></div>
+<div class="circle1"></div>
+<div class="test"></div>
+<div class="circle3"></div>
+<h1 class="username_text">NAME</h1>
+<div class="u_line"></div>
+<h1 class="email_text">EMAIL</h1>
+<div class="e_line"></div>
+<h1 class="ps1_text">PASSWORD</h1>
+<div class="p_line"></div>
+<h1 class="ps2_text">REPEAT PASSWORD</h1>
+<div class="p2_line"></div>
+
+
+
+
+
+<form method="POST" action="">
+  {% csrf_token %}
+  <div class="form-control1">
+    {{form.username}}
+<!--     <input type="text" class="form-control1" name="username", placeholder="Username" required> -->
+
+    
+  </div><br/>
+  <div class="form-control2">
+    {{form.email}}
+    <!-- <input type="email" class="form-control2" name="email", placeholder="email" required> -->
+    
+  </div><br/>
+  <div class="password1">
+    {{form.password1}}
+    
+  </div><br/>
+  <div class="password2">
+    {{form.password2}}
+    
+  </div><br/>
+  <!-- <div class="input-group mb-2">
+    {{form.password1}}
+  </div>
+  <div class="input-group mb-2">
+    {{form.password2}}
+  </div> -->
+
+ <!--  <div class="d-flex justify-content-center mt-3 login_container">
+    <input class="btn login_btn" type="submit" value="Register Account">
+  </div>
+</form> -->
+<button type="submit" class="register_btn">Register</button>
+
+<a class="login" href="{% url 'login_user' %}">LOGIN</a>
+
+
+{% endblock %}

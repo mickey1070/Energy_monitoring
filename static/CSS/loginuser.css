@@ -1,0 +1,160 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;700;800;900&display=swap');
+.form-control1{
+    width: 400px;
+    position: absolute;
+    top: 18.2rem;
+    left: 47.875rem;
+    outline: none;
+    background-color: transparent;
+    color: #FFF;
+}
+.form-control2{
+    width: 400px;
+    position: absolute;
+    top: 27.9rem;
+    left: 47.875rem;
+    outline: none;
+    background-color: transparent;
+    color: #FFF;
+}
+
+::-webkit-input-placeholder {
+    color: #DDD;
+ }
+ ::-moz-placeholder {
+    color: #DDD;  
+ }
+
+body {
+    background: #1E1E1E;
+}
+
+.logo{
+    width: 141.064px;
+    height: 38px;
+    flex-shrink: 0;
+    position: absolute;
+    top: 0.688rem;
+    left: 55.563rem;
+}
+
+.glass_box{
+    width: 463px;
+    height: 602px;
+    flex-shrink: 0;
+    border-radius: 32px;
+    background: rgba(255, 255, 255, 0.09);
+    backdrop-filter: blur(10px);
+    position: absolute;
+    top: 9.938rem;
+    left: 45.5rem;
+}
+
+.circle1{
+    width: 376px;
+    height: 376px;
+    flex-shrink: 0;
+    border-radius: 376px;
+    background: linear-gradient(146deg, #0FB6B8 17.95%, rgba(220, 220, 220, 0.00) 90.11%);
+    position: absolute;
+    top:7.625rem;
+    left: 36rem;
+}
+
+.test{
+    width: 221px;
+    height: 221px;
+    flex-shrink: 0;
+    border-radius: 221px;
+    background: linear-gradient(220deg, #9C46F2 9.81%, rgba(217, 217, 217, 0.00) 83.09%);
+    position: absolute;
+    top:32.25rem;
+    left: 69.563rem;
+}
+
+.circle3{
+    width: 149px;
+    height: 149px;
+    flex-shrink: 0;
+    border-radius: 221px;
+    background: linear-gradient(143deg, #DD766F 0%, rgba(217, 217, 217, 0.00) 107.97%);
+    position: absolute;
+    top: 44.063rem;
+    left:42.563rem;
+}
+
+h1{
+    color: #FFF;
+    font-family: Inter;
+    font-size: 28px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: normal;
+    position: absolute;
+    top: 14.563rem;
+    left: 47.875rem;
+}
+
+.u_line{
+    width: 360px;
+    height: 2px;
+    flex-shrink: 0;
+    background: #FFF;
+    position: absolute;
+    top: 20rem;
+    left: 47.875rem;
+}
+
+.p_line{
+    width: 360px;
+    height: 2px;
+    flex-shrink: 0;
+    background: #FFF;
+    position: absolute;
+    top: 29.5rem;
+    left: 47.875rem;
+}
+
+.password{
+    color: #FFF;
+    font-family: Inter;
+    font-size: 28px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: normal;
+    position: absolute;
+    top: 24.063rem;
+    left: 47.875rem;
+}
+
+.login_btn{
+    width: 165px;
+    height: 54px;
+    flex-shrink: 0;
+    border-radius: 14px;
+    background: #0FB6B8;
+    color: #FFF;
+    font-family: Inter;
+    font-size: 28px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: normal;
+    position: absolute;
+    top: 34.375rem;
+    left: 54.813rem;
+    border-color: transparent;
+}
+
+.register{
+    color: #FFF;
+    font-family: Inter;
+font-size: 15px;
+font-style: normal;
+font-weight: 500;
+line-height: normal;
+position:absolute;
+top: 41.438rem;
+left: 57.875rem;
+text-decoration: none;
+}
+
