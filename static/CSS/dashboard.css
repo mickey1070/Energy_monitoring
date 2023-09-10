@@ -3,15 +3,317 @@
 body{
     background: #ffffff;
 }
-
-.daily{
-    width: 445.317px;
-height: 111.329px;
+.container{
+    position: relative;
+}
+.Daily{
+    width: 27.832rem;
+height: 6.958rem;
 flex-shrink: 0;
 border-radius: 10px;
 background: #E1E0E1;
 box-shadow: 0px 6px 10px 0px rgba(0, 0, 0, 0.25);
-position: fixed;
-top: 97px;
-left: 344px;
+position: absolute;
+top:2.188rem;
+left: -8rem;
+}
+
+.D_Text{
+    position: relative;
+    top: 0.625rem;
+    left: 1.044rem;
+flex-shrink: 0;
+color: #000;
+font-family: Inter;
+font-size: 21px;
+font-style: normal;
+font-weight: 700;
+line-height: normal;
+}
+
+.D_value{
+    position: relative;
+    top: 1.2rem;
+    left: 1.044rem;
+    color: #000;
+font-family: Inter;
+font-size: 29px;
+font-style: normal;
+font-weight: 700;
+line-height: normal;
+}
+
+
+.Monthly{
+    width: 27.832rem;
+height: 6.958rem;
+flex-shrink: 0;
+border-radius: 10px;
+background: #E1E0E1;
+box-shadow: 0px 6px 10px 0px rgba(0, 0, 0, 0.25);
+position: absolute;
+top:2.188rem;
+left: 24rem;
+}
+
+.M_Text{
+    position: relative;
+    top: 0.625rem;
+    left: 1.044rem;
+flex-shrink: 0;
+color: #000;
+font-family: Inter;
+font-size: 21px;
+font-style: normal;
+font-weight: 700;
+line-height: normal;
+}
+
+.M_value{
+    position: relative;
+    top: 1.2rem;
+    left: 1.044rem;
+    color: #000;
+font-family: Inter;
+font-size: 29px;
+font-style: normal;
+font-weight: 700;
+line-height: normal;
+} 
+
+.Yearly{
+    width: 27.832rem;
+height: 6.958rem;
+flex-shrink: 0;
+border-radius: 10px;
+background: #E1E0E1;
+box-shadow: 0px 6px 10px 0px rgba(0, 0, 0, 0.25);
+position: absolute;
+top:2.188rem;
+left: 56rem;
+}
+
+.Y_Text{
+    position: relative;
+    top: 0.625rem;
+    left: 1.044rem;
+flex-shrink: 0;
+color: #000;
+font-family: Inter;
+font-size: 21px;
+font-style: normal;
+font-weight: 700;
+line-height: normal;
+}
+
+.Y_value{
+    position: relative;
+    top: 1.2rem;
+    left: 1.044rem;
+    color: #000;
+font-family: Inter;
+font-size: 29px;
+font-style: normal;
+font-weight: 700;
+line-height: normal;
+} 
+
+.Line_chart{
+    width: 958.545px;
+height: 732.547px;
+flex-shrink: 0;
+border-radius: 10px;
+background: #D9D9D9;
+box-shadow: 0px 6px 10px 0px rgba(0, 0, 0, 0.25);
+position: absolute;
+top:13.375rem;
+left: -8rem;
+}
+
+.Line_text{
+    position: relative;
+    top:  1.67rem;
+    left: 1.044rem;
+flex-shrink: 0;
+color: #000;
+font-family: Inter;
+font-size: 21px;
+font-style: normal;
+font-weight: 700;
+line-height: normal;
+}
+
+img{
+    display: block;
+    margin-top: 10%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.Cost_tile{
+    width: 445.317px;
+    height: 333.988px;
+    flex-shrink: 0;
+    border-radius: 10px;
+background: #D9D9D9;
+box-shadow: 0px 6px 10px 0px rgba(0, 0, 0, 0.25);
+    position: absolute;
+    top:13.375rem;
+    left: 56rem;
+}
+
+.split_line_1{
+    width: 407.465px;
+height: 1px;
+background: #1C1C1C;
+position: relative;
+    top:4.35rem;
+    left: 1.461rem;
+}
+
+.cost_title{
+    width: 67.911px;
+height: 27.832px;
+flex-shrink: 0;
+color: #000;
+font-family: Inter;
+font-size: 21px;
+font-style: normal;
+font-weight: 700;
+line-height: normal;
+position: relative;
+top: 1.67rem;
+left: 1.044rem;
+}
+
+.Energy_cost{
+    width: 140.275px;
+height: 16.699px;
+flex-shrink: 0;
+color: #000;
+font-family: Inter;
+font-size: 12px;
+font-style: normal;
+font-weight: 400;
+line-height: normal;
+position: relative;
+top: 4.000rem;
+left:1.461rem ;
+}
+
+.Average_cost{
+    width: 140.275px;
+    height: 16.699px;
+    flex-shrink: 0;
+    color: #000;
+    font-family: Inter;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+    position: relative;
+    top:6.8rem;
+    left:1.461rem
+}
+
+.split_line_2{
+    width: 407.465px;
+    height: 1px;
+    background: #1C1C1C;
+    position: relative;
+    top: 8rem;
+    left: 1.461rem;
+}
+
+.Predicted_yearly{
+    display: flex;
+width: 149px;
+height: 16px;
+flex-direction: column;
+justify-content: center;
+flex-shrink: 0;
+color: #000;
+font-family: Inter;
+font-size: 12px;
+font-style: normal;
+font-weight: 400;
+line-height: normal;
+    position: relative;
+    top: 10.188rem;
+    left: 1.461rem;
+}
+
+.T_energY_cost{
+    width: 130px;
+height: 24px;
+flex-shrink: 0;
+color: #000;
+font-family: Inter;
+font-size: 18px;
+font-style: normal;
+font-weight: 700;
+line-height: normal;
+position: relative;
+    top: 3.000rem;
+    left: 20.318rem;
+}
+
+.A_energY_cost{
+    width: 111px;
+    height: 24px;
+    flex-shrink: 0;
+    color: #000;
+    font-family: Inter;
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: normal;
+position: relative;
+top:5.6rem ;
+left: 20.318rem;
+}
+
+.P_energY_cost{
+    color: #000;
+font-family: Inter;
+font-size: 18px;
+font-style: normal;
+font-weight: 700;
+line-height: normal;
+color: #000;
+font-family: Inter;
+font-size: 18px;
+font-style: normal;
+font-weight: 700;
+line-height: normal;
+position: relative;
+top: 9.2rem;
+left: 20.318rem;
+}
+
+.Alert_box{
+    width: 445.317px;
+height: 333.988px;
+flex-shrink: 0;
+border-radius: 10px;
+background: #D9D9D9;
+box-shadow: 0px 6px 10px 0px rgba(0, 0, 0, 0.25);
+position: absolute;
+    top:38rem;
+    left: 56rem;
+}
+
+.Alert_text{
+    width: 92.403px;
+height: 27.832px;
+flex-shrink: 0;
+color: #000;
+font-family: Inter;
+font-size: 21px;
+font-style: normal;
+font-weight: 700;
+line-height: normal;
+position: relative;
+top: 1.67rem;
+left: 1.044rem;
 }
