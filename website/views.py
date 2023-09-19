@@ -1,14 +1,16 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from .forms import SignUpForm, AddRecordForm
-from .models import Record,energy
+from .forms import SignUpForm,DateRangeForm,EnergySlabRateForm
+from .models import energy,EnergySlabRate
 import pandas as pd
 import matplotlib.pyplot as plt
 from django.shortcuts import render
 from datetime import date, datetime, timedelta
 from django.db.models import Q
-
+import csv
+from django.http import HttpResponse
+from decimal import Decimal
 
 # Create your views here.
 
@@ -22,7 +24,7 @@ def login_user(request):
 		if user is not None:
 			login(request, user)
 			messages.success(request, "You Have Been Logged In!")
-			return redirect('dashboard')
+			return redirect('Dashboard')
 		else:
 			messages.success(request, "There Was An Error Logging In, Please Try Again...")
 			return redirect('login_user')
@@ -45,7 +47,7 @@ def register_user(request):
 			user = authenticate(username=username, password=password)
 			login(request, user)
 			messages.success(request, "You Have Successfully Registered! Welcome!")
-			return redirect('dashboard')
+			return redirect('Dashboard')
 	else:
 		form = SignUpForm()
 		return render(request, 'register.html', {'form':form})
@@ -58,7 +60,7 @@ def register_user(request):
 #using the below code if you want status vs cost
 """ cost_per_unit = 0.10  # Replace with your cost per unit
 
-def dashboard(request):
+def Dashboard(request):
     # Fetch data from the MySQL database
     data = energy.objects.all()
 
@@ -89,7 +91,7 @@ def dashboard(request):
     # Save the plot as an image
     plt.savefig('static/Graphs/status_vs_consumption.png')  # Media directory
 
-    return render(request, 'dashboard.html') """
+    return render(request, 'Dashboard.html') """
 
 slab_rates = {
     'slab1': {
@@ -110,26 +112,30 @@ slab_rates = {
 }
 
 def calculate_cost(consumption):
-    cost = 0
-    for slab, values in slab_rates.items():
-        start = values['start']
-        end = values['end']
-        rate = values['rate']
+    cost = Decimal('0.0')  # Initialize cost as a Decimal
+    slab_rates = EnergySlabRate.objects.all().order_by('start_usage')
+
+    for slab_rate in slab_rates:
+        start = Decimal(str(slab_rate.start_usage))  # Ensure start is Decimal
+        end = slab_rate.end_usage
+        rate = Decimal(str(slab_rate.rate_per_unit))  # Ensure rate is Decimal
 
         if end is None:
-            cost += (consumption - start) * rate
+            cost += (Decimal(str(consumption)) - start) * rate
             break
         elif consumption <= end:
-            cost += (consumption - start + 1) * rate
+            cost += (Decimal(str(consumption)) - start + Decimal('1.0')) * rate
             break
         else:
-            cost += (end - start + 1) * rate
+            cost += (end - start + Decimal('1.0')) * rate
 
-    return cost
+    return float(cost)
 
-
-def dashboard(request):
+def Dashboard(request):
 	today = date.today()
+	previous_day = today - timedelta(days=1)
+	# Calculate the date for the first day of the current year
+	first_day_current_year = today.replace(month=1, day=1)
 	data_day = energy.objects.filter(
     timestamp__year=today.year,
     timestamp__month=today.month,
@@ -148,6 +154,32 @@ def dashboard(request):
     Q(timestamp__gte=start_of_year) &
     Q(timestamp__lte=end_of_year)
 	)
+	 # Calculate previous day's total cost
+	data_previous_day = energy.objects.filter(
+	    timestamp__year=previous_day.year,
+	    timestamp__month=previous_day.month,
+	    timestamp__day=previous_day.day
+	)
+	
+	 # Calculate the date for the first day of the previous month
+	first_day_previous_month = today.replace(day=1) - timedelta(days=1)
+	start_of_previous_month = first_day_previous_month.replace(day=1)
+
+	# Fetch data from the MySQL database for the previous month
+	data_previous_month = energy.objects.filter(
+	    timestamp__year=start_of_previous_month.year,
+	    timestamp__month=start_of_previous_month.month
+	)
+
+	# Calculate previous year's total cost
+	data_previous_year = energy.objects.filter(
+	    timestamp__year=first_day_current_year.year - 1
+	)
+	total_consumption_previous_year = sum(entry.value for entry in data_previous_year)
+	total_cost_previous_year = calculate_cost(total_consumption_previous_year)
+
+
+
 	# Calculate total consumption and total cost for one day
 	total_consumption_day = sum(entry.value for entry in data_day)
 	total_cost_day = calculate_cost(total_consumption_day)	
@@ -162,6 +194,43 @@ def dashboard(request):
 	# Estimate the remaining months in the year (assuming 12 months in a year)
 	remaining_months = 12 - len(data_year)
 	predicted_total_cost_year = total_cost_year + (average_monthly_cost * remaining_months)
+
+	total_consumption_previous_day = sum(entry.value for entry in data_previous_day)
+	total_cost_previous_day = calculate_cost(total_consumption_previous_day)
+
+	# Calculate total consumption and total cost for the previous month
+	total_consumption_previous_month = sum(entry.value for entry in data_previous_month)
+	total_cost_previous_month = calculate_cost(total_consumption_previous_month)
+
+	# Calculate total consumption and total cost for the previous year
+	total_consumption_previous_year = sum(entry.value for entry in data_previous_year)
+	total_cost_previous_year = calculate_cost(total_consumption_previous_year)
+
+	# Compare today's cost with previous day's cost and output a symbol
+	if total_cost_day > total_cost_previous_day:
+		cost_comparison_symbol = 'red.png'
+	elif total_cost_day < total_cost_previous_day:
+		cost_comparison_symbol = 'green.png'
+	else:
+		cost_comparison_symbol = 'equal.png'
+
+	 # Determine the cost comparison symbol for year vs. previous year
+	if total_cost_year > total_cost_previous_year:
+		cost_comparison_symbol_year = 'red.png'
+	elif total_cost_year < total_cost_previous_year:
+		cost_comparison_symbol_year = 'green.png'
+	else:
+		cost_comparison_symbol_year = 'equals.png'
+
+# Determine the cost comparison symbol for month vs. previous month
+	if total_cost_month > total_cost_previous_month:
+		cost_comparison_symbol_month = 'red.png'
+	elif total_cost_month < total_cost_previous_month:
+		cost_comparison_symbol_month = 'green.png'
+	else:
+		cost_comparison_symbol_month = 'equals.png'
+
+
 	data = energy.objects.all()
     # Create a Pandas DataFrame from the data
 	df = pd.DataFrame(data.values())	
@@ -185,11 +254,105 @@ def dashboard(request):
 	context = {
         'total_consumption_day': total_consumption_day,
         'total_cost_day': total_cost_day,
-        'total_cost_month': total_cost_month,
+        'total_cost_month': total_cost_month,	
         'total_cost_year': total_cost_year,
 		'average_cost_year': average_monthly_cost * 12,  # Average cost for a full year
     	'predicted_total_cost_year': predicted_total_cost_year,
 		'average_monthly_cost':average_monthly_cost,
+		'cost_comparison_symbol':cost_comparison_symbol,
+		'cost_comparison_symbol_year': cost_comparison_symbol_year,
+		'cost_comparison_symbol_month': cost_comparison_symbol_month,
     }
 
-	return render(request, 'dashboard.html',context)
+	return render(request, 'Dashboard.html',context)
+
+
+def report(request):
+    if request.method == 'POST':
+        form = DateRangeForm(request.POST)
+        if form.is_valid():
+            start_date = form.cleaned_data['start_date']
+            end_date = form.cleaned_data['end_date']
+            
+            # Query the database for data within the specified date range
+            data_within_range = energy.objects.filter(
+                timestamp__range=(start_date, end_date)
+            )
+            
+            context = {
+                'data_within_range': data_within_range,
+                'form': form,
+            }
+            return render(request, 'report.html', context)
+    else:
+        form = DateRangeForm()
+    
+    context = {'form': form}
+    return render(request, 'report.html', context)
+
+def download_csv(request):
+    if request.method == 'POST':
+        # Your data retrieval logic here (similar to date_range_query view)
+        start_date = ...
+        end_date = ...
+        data_within_range = energy.objects.filter(
+            timestamp__range=(start_date, end_date)
+        )
+
+        # Create a CSV response
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="data.csv"'
+
+        # Create a CSV writer
+        writer = csv.writer(response)
+
+        # Write the header row
+        writer.writerow(['Date', 'Value'])
+
+        # Write data rows
+        for entry in data_within_range:
+            writer.writerow([entry.timestamp, entry.value])
+
+        return response
+	
+def energy_slab_rates(request):
+    slab_rates = EnergySlabRate.objects.all()
+    form = EnergySlabRateForm()
+
+    if request.method == 'POST':
+        form = EnergySlabRateForm(request.POST)
+        if form.is_valid():
+            if not form.cleaned_data['end_usage']:
+                form.cleaned_data['end_usage'] = float('inf')  # Set to positive infinity or another suitable value
+            form.save()
+            return redirect('energy_slab_rates')
+
+    context = {
+        'slab_rates': slab_rates,
+        'form': form,
+    }
+
+    return render(request, 'energy_slab_rates.html', context)
+
+def edit_energy_slab_rate(request, slab_rate_id):
+    slab_rate = EnergySlabRate.objects.get(id=slab_rate_id)
+
+    if request.method == 'POST':
+        form = EnergySlabRateForm(request.POST, instance=slab_rate)
+        if form.is_valid():
+			
+            form.save()
+            return redirect('energy_slab_rates')
+    else:
+        form = EnergySlabRateForm(instance=slab_rate)
+
+    context = {
+        'form': form,
+    }
+
+    return render(request, 'edit_energy_slab_rate.html', context)
+
+def delete_energy_slab_rate(request, slab_rate_id):
+    slab_rate = EnergySlabRate.objects.get(id=slab_rate_id)
+    slab_rate.delete()
+    return redirect('energy_slab_rates')

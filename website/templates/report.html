@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load static%}
+{% block content %}
+{% if user.is_authenticated %}
+
+<body>
+   <!--  <script src="{% static 'JavaScript/downloadcsv.js' %}"></script> -->
+   <script>
+    document.getElementById('download-csv').addEventListener('click', function() {
+    // Trigger form submission when the button is clicked
+    document.querySelector('form').submit();
+});
+
+
+   </script>
+    <h1>Date Range Query</h1>
+    
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Submit</button>
+        <button type="button" id="download-csv">Download CSV</button>
+    </form>
+    
+    {% if data_within_range %}
+        <h2>Data within the specified date range:</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in data_within_range %}
+                    <tr>
+                        <td>{{entry.status}}</td>
+                        <td>{{ entry.timestamp }}</td>
+                        <td>{{ entry.value }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+</body>
+{% endif %}
+{% endblock %}

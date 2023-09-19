@@ -16,11 +16,11 @@
                 </br>
                 </br>
                 <div class="nav_list"> 
-                    <a href="{% url 'dashboard' %}" class="nav_link active"> 
+                    <a href="{% url 'Dashboard' %}" class="nav_link active"> 
                         <img src="{% static 'Images/sidebar/Dashboard.png' %}" alt="Dashboard"> 
                         <span class="nav_name">Dashboard</span> 
                     </a> 
-                    <a href="#" class="nav_link"> 
+                    <a href="{% url 'energy_slab_rates' %}" class="nav_link"> 
                         <img src="{% static 'Images/sidebar/Cost.png' %}" alt="Cost">  
                         <span class="nav_name">Cost</span>
                     </a> 
@@ -28,7 +28,7 @@
                         <img src="{% static 'Images/sidebar/Machine.png' %}" alt="Cost"> 
                         <span class="nav_name">Machine</span> 
                     </a> 
-                    <a href="#" class="nav_link"> 
+                    <a href="{% url 'report' %}" class="nav_link"> 
                         <img src="{% static 'Images/sidebar/Report.png' %}" alt="Report"> 
                         <span class="nav_name">Report</span>
                     </a> 
