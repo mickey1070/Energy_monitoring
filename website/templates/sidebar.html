@@ -24,7 +24,8 @@
                         <img src="{% static 'Images/sidebar/Cost.png' %}" alt="Cost">  
                         <span class="nav_name">Cost</span>
                     </a> 
-                    <a href="#" class="nav_link"> 
+                    
+                    <a href="{% url 'all_machine_graphs' %}" class="nav_link"> 
                         <img src="{% static 'Images/sidebar/Machine.png' %}" alt="Cost"> 
                         <span class="nav_name">Machine</span> 
                     </a> 
@@ -32,9 +33,9 @@
                         <img src="{% static 'Images/sidebar/Report.png' %}" alt="Report"> 
                         <span class="nav_name">Report</span>
                     </a> 
-                    <a href="#" class="nav_link"> <img src="{% static 'Images/sidebar/profile.png' %}" alt="Profile"> 
+                    <!-- <a href="#" class="nav_link"> <img src="{% static 'Images/sidebar/profile.png' %}" alt="Profile"> 
                         <span class="nav_name">Profile</span> 
-                    </a> 
+                    </a>  -->
                  </div>
             </div> <a href="{% url 'logout_user' %}" class="nav_link"> <img src="{% static 'Images/sidebar/SignOut.png' %}" alt="SignOut"> <span class="nav_name">SignOut</span> </a>
         </nav>

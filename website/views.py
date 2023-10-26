@@ -2,15 +2,22 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from .forms import SignUpForm,DateRangeForm,EnergySlabRateForm
-from .models import energy,EnergySlabRate
+from .models import energy,EnergySlabRate,MonthlyEnergyCost,EnergyCost
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from django.shortcuts import render
 from datetime import date, datetime, timedelta
 from django.db.models import Q
 import csv
 from django.http import HttpResponse
 from decimal import Decimal
+from django.http import HttpResponse
+from io import BytesIO
+import base64
+import os
+from django.conf import settings
+from django.utils import timezone
 
 # Create your views here.
 
@@ -131,79 +138,90 @@ def calculate_cost(consumption):
 
     return float(cost)
 
+def calculate_yearly_energy_cost():
+    today = date.today()
+    first_day_current_year = today.replace(month=1, day=1)
+
+    data_year = energy.objects.filter(
+        Q(timestamp__year=first_day_current_year.year)
+    )
+
+    total_consumption_year = sum(entry.value for entry in data_year)
+    total_cost_year = calculate_cost(total_consumption_year, slab_rates)
+
+    # Predicting the total cost for the year
+    average_monthly_cost = total_cost_year / len(data_year)
+    remaining_months = 12 - len(data_year)
+    predicted_total_cost_year = total_cost_year + (average_monthly_cost * remaining_months)
+
+    # Fetch monthly energy cost data for the current year
+    monthly_costs = MonthlyEnergyCost.objects.filter(
+        month__year=first_day_current_year.year
+    ).order_by('month')
+
+    # You now have yearly and monthly cost data
+    return total_cost_year, predicted_total_cost_year, monthly_costs
+
 def Dashboard(request):
 	today = date.today()
 	previous_day = today - timedelta(days=1)
-	# Calculate the date for the first day of the current year
 	first_day_current_year = today.replace(month=1, day=1)
+
 	data_day = energy.objects.filter(
-    timestamp__year=today.year,
-    timestamp__month=today.month,
-    timestamp__day=today.day
+	    timestamp__year=today.year,
+	    timestamp__month=today.month,
+	    timestamp__day=today.day
 	)
+
 	start_of_month = datetime(today.year, today.month, 1)
 	end_of_month = start_of_month.replace(day=1, month=today.month + 1) - timedelta(days=1)
 	data_month = energy.objects.filter(
-    Q(timestamp__gte=start_of_month) &
-    Q(timestamp__lte=end_of_month)
+	    Q(timestamp__gte=start_of_month) &
+	    Q(timestamp__lte=end_of_month)
 	)
-	# Fetch data from the MySQL database for one year (starting from January 1st of the current year)
+
 	start_of_year = datetime(today.year, 1, 1)
 	end_of_year = datetime(today.year, 12, 31)
 	data_year = energy.objects.filter(
-    Q(timestamp__gte=start_of_year) &
-    Q(timestamp__lte=end_of_year)
+	    Q(timestamp__gte=start_of_year) &
+	    Q(timestamp__lte=end_of_year)
 	)
-	 # Calculate previous day's total cost
+
 	data_previous_day = energy.objects.filter(
 	    timestamp__year=previous_day.year,
 	    timestamp__month=previous_day.month,
 	    timestamp__day=previous_day.day
 	)
-	
-	 # Calculate the date for the first day of the previous month
+
 	first_day_previous_month = today.replace(day=1) - timedelta(days=1)
 	start_of_previous_month = first_day_previous_month.replace(day=1)
-
-	# Fetch data from the MySQL database for the previous month
 	data_previous_month = energy.objects.filter(
 	    timestamp__year=start_of_previous_month.year,
 	    timestamp__month=start_of_previous_month.month
 	)
 
-	# Calculate previous year's total cost
 	data_previous_year = energy.objects.filter(
 	    timestamp__year=first_day_current_year.year - 1
 	)
-	total_consumption_previous_year = sum(entry.value for entry in data_previous_year)
-	total_cost_previous_year = calculate_cost(total_consumption_previous_year)
 
+	slab_rates = EnergySlabRate.objects.all().order_by('start_usage')
 
+	total_consumption_day = float(sum(entry.value for entry in data_day))
+	total_cost_day = calculate_cost(total_consumption_day)
 
-	# Calculate total consumption and total cost for one day
-	total_consumption_day = sum(entry.value for entry in data_day)
-	total_cost_day = calculate_cost(total_consumption_day)	
-	# Calculate total consumption and total cost for one month
-	total_consumption_month = sum(entry.value for entry in data_month)
-	total_cost_month = calculate_cost(total_consumption_month)	
-	# Calculate total consumption and total cost for one year
-	total_consumption_year = sum(entry.value for entry in data_year)
+	total_consumption_month = float(sum(entry.value for entry in data_month))
+	total_cost_month = calculate_cost(total_consumption_month)
+
+	total_consumption_year = float(sum(entry.value for entry in data_year))
 	total_cost_year = calculate_cost(total_consumption_year)
-	#predicting the total cost for the year
-	average_monthly_cost = total_cost_year / len(data_year)
-	# Estimate the remaining months in the year (assuming 12 months in a year)
-	remaining_months = 12 - len(data_year)
-	predicted_total_cost_year = total_cost_year + (average_monthly_cost * remaining_months)
 
-	total_consumption_previous_day = sum(entry.value for entry in data_previous_day)
+	total_consumption_previous_day = float(sum(entry.value for entry in data_previous_day))
 	total_cost_previous_day = calculate_cost(total_consumption_previous_day)
 
-	# Calculate total consumption and total cost for the previous month
-	total_consumption_previous_month = sum(entry.value for entry in data_previous_month)
+	total_consumption_previous_month = float(sum(entry.value for entry in data_previous_month))
 	total_cost_previous_month = calculate_cost(total_consumption_previous_month)
 
-	# Calculate total consumption and total cost for the previous year
-	total_consumption_previous_year = sum(entry.value for entry in data_previous_year)
+	total_consumption_previous_year = float(sum(entry.value for entry in data_previous_year))
 	total_cost_previous_year = calculate_cost(total_consumption_previous_year)
 
 	# Compare today's cost with previous day's cost and output a symbol
@@ -256,9 +274,9 @@ def Dashboard(request):
         'total_cost_day': total_cost_day,
         'total_cost_month': total_cost_month,	
         'total_cost_year': total_cost_year,
-		'average_cost_year': average_monthly_cost * 12,  # Average cost for a full year
+		""" 'average_cost_year': average_monthly_cost * 12,  # Average cost for a full year
     	'predicted_total_cost_year': predicted_total_cost_year,
-		'average_monthly_cost':average_monthly_cost,
+		'average_monthly_cost':average_monthly_cost, """
 		'cost_comparison_symbol':cost_comparison_symbol,
 		'cost_comparison_symbol_year': cost_comparison_symbol_year,
 		'cost_comparison_symbol_month': cost_comparison_symbol_month,
@@ -356,3 +374,200 @@ def delete_energy_slab_rate(request, slab_rate_id):
     slab_rate = EnergySlabRate.objects.get(id=slab_rate_id)
     slab_rate.delete()
     return redirect('energy_slab_rates')
+
+
+def generate_line_chart(data, title):
+    # Assume data is a Pandas DataFrame with 'timestamp' and 'value' columns
+    plt.figure(figsize=(10, 6))
+    plt.plot(data['timestamp'], data['value'], marker='o')
+    plt.title(title)
+    plt.xlabel('Timestamp')
+    plt.ylabel('Consumption (kW)')
+    plt.grid(True)
+
+    # Save the plot to a BytesIO object
+    image_stream = BytesIO()
+    plt.savefig(image_stream, format='png')
+    plt.close()
+
+    # Move the BytesIO pointer to the beginning of the stream
+    image_stream.seek(0)
+
+    # Encode the image data as a base64 string
+    encoded_image = base64.b64encode(image_stream.read()).decode('utf-8')
+
+    return encoded_image
+
+
+def machine_graph(request, machine_name):
+    # Get the current date
+    today = date.today()
+
+    # Calculate the date for the first day of the current year
+    start_of_year = date(today.year, 1, 1)
+
+    # Fetch data from the MySQL database for the current year and the specified machine
+    data_current_year = energy.objects.filter(
+        machine=machine_name,
+        timestamp__year=today.year
+    ).order_by('timestamp')
+
+    # Fetch data from the MySQL database for the previous year and the specified machine
+    data_previous_year = energy.objects.filter(
+        machine=machine_name,
+        timestamp__year=today.year - 1
+    ).order_by('timestamp')
+
+    # Prepare data for plotting
+    timestamps_current_year = [entry.timestamp for entry in data_current_year]
+    consumption_values_current_year = [entry.value for entry in data_current_year]
+
+    timestamps_previous_year = [entry.timestamp for entry in data_previous_year]
+    consumption_values_previous_year = [entry.value for entry in data_previous_year]
+
+    # Create a line graph
+    plt.figure(figsize=(10, 6))
+    plt.plot(timestamps_current_year, consumption_values_current_year, label=f'Current Year Consumption')
+    plt.plot(timestamps_previous_year, consumption_values_previous_year, label=f'Previous Year Consumption', linestyle='dashed')
+
+    plt.xlabel('Timestamp')
+    plt.ylabel('Energy Consumption')
+    plt.title(f'Machine {machine_name} Consumption Comparison (Current Year vs. Previous Year)')
+    plt.legend()
+    plt.tight_layout()
+
+    # Save the plot to a file in the static folder
+    graph_filename = f'static/Graphs/machine_graphs/machine_{machine_name}_consumption_comparison.png'
+    plt.savefig(graph_filename, transparent=True)
+    plt.close()
+
+    # Render the HTML template with the filename of the saved graph
+    return render(request, 'machine_graph.html', {'graph_filename': graph_filename})
+
+def all_machine_graphs(request):
+    # Get the list of all machines
+    machines = energy.objects.values('machine').distinct()
+
+    # Create a list to store the filenames for each machine
+    machine_graphs = []
+
+    for machine in machines:
+        machine_name = machine['machine']
+
+        # Fetch data for the current date
+        current_data_day = energy.objects.filter(
+            machine=machine_name,
+            timestamp__year=date.today().year,
+            timestamp__month=date.today().month,
+            timestamp__day=date.today().day
+        ).order_by('timestamp')
+
+        # Fetch data for the previous day
+        previous_date_day = date.today() - timedelta(days=1)
+        previous_data_day = energy.objects.filter(
+            machine=machine_name,
+            timestamp__year=previous_date_day.year,
+            timestamp__month=previous_date_day.month,
+            timestamp__day=previous_date_day.day
+        ).order_by('timestamp')
+
+        # Fetch data for the current month
+        start_of_month = date.today().replace(day=1)
+        end_of_month = (start_of_month + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+        current_data_month = energy.objects.filter(
+            machine=machine_name,
+            timestamp__range=(start_of_month, end_of_month)
+        ).order_by('timestamp')
+
+        # Fetch data for the previous month
+        first_day_previous_month = date.today().replace(day=1) - timedelta(days=1)
+        start_of_previous_month = first_day_previous_month.replace(day=1)
+        end_of_previous_month = (start_of_previous_month + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+        previous_data_month = energy.objects.filter(
+            machine=machine_name,
+            timestamp__range=(start_of_previous_month, end_of_previous_month)
+        ).order_by('timestamp')
+
+        # Fetch data for the current year
+        current_data_year = energy.objects.filter(
+            machine=machine_name,
+            timestamp__year=date.today().year
+        ).order_by('timestamp')
+
+        # Fetch data for the previous year
+        previous_data_year = energy.objects.filter(
+            machine=machine_name,
+            timestamp__year=date.today().year - 1
+        ).order_by('timestamp')
+
+        # Prepare data for plotting
+        def prepare_data(data):
+            timestamps = [entry.timestamp for entry in data]
+            consumption_values = [entry.value for entry in data]
+            return timestamps, consumption_values
+
+        timestamps_current_day, consumption_values_current_day = prepare_data(current_data_day)
+        timestamps_previous_day, consumption_values_previous_day = prepare_data(previous_data_day)
+
+        timestamps_current_month, consumption_values_current_month = prepare_data(current_data_month)
+        timestamps_previous_month, consumption_values_previous_month = prepare_data(previous_data_month)
+
+        timestamps_current_year, consumption_values_current_year = prepare_data(current_data_year)
+        timestamps_previous_year, consumption_values_previous_year = prepare_data(previous_data_year)
+
+        # Create line graphs for each comparison
+        plt.figure(figsize=(15, 10))
+
+        # Day vs Previous Day
+        plt.subplot(3, 1, 1)
+        plt.plot(timestamps_current_day, consumption_values_current_day, label=f'Current Day Consumption')
+        plt.plot(timestamps_previous_day, consumption_values_previous_day, label=f'Previous Day Consumption', linestyle='dashed')
+        plt.xlabel('Timestamp')
+        plt.ylabel('Energy Consumption')
+        plt.title(f'Machine {machine_name} Day vs. Previous Day Consumption Comparison')
+        plt.legend()
+        plt.tight_layout()
+
+        # Month vs Previous Month
+        plt.subplot(3, 1, 2)
+        plt.plot(timestamps_current_month, consumption_values_current_month, label=f'Current Month Consumption')
+        plt.plot(timestamps_previous_month, consumption_values_previous_month, label=f'Previous Month Consumption', linestyle='dashed')
+        plt.xlabel('Timestamp')
+        plt.ylabel('Energy Consumption')
+        plt.title(f'Machine {machine_name} Month vs. Previous Month Consumption Comparison')
+        plt.legend()
+        plt.tight_layout()
+
+        # Year vs Previous Year
+        plt.subplot(3, 1, 3)
+        plt.plot(timestamps_current_year, consumption_values_current_year, label=f'Current Year Consumption')
+        plt.plot(timestamps_previous_year, consumption_values_previous_year, label=f'Previous Year Consumption', linestyle='dashed')
+        plt.xlabel('Timestamp')
+        plt.ylabel('Energy Consumption')
+        plt.title(f'Machine {machine_name} Year vs. Previous Year Consumption Comparison')
+        plt.legend()
+        plt.tight_layout()
+
+        # Save the plots to files in the static folder
+        graph_filename_day = f'static/Graphs/machine_graphs/machine_{machine_name}_day_comparison.png'
+        plt.savefig(graph_filename_day, transparent=True)
+        plt.close()
+
+        graph_filename_month = f'static/Graphs/machine_graphs/machine_{machine_name}_month_comparison.png'
+        plt.savefig(graph_filename_month, transparent=True)
+        plt.close()
+
+        graph_filename_year = f'static/Graphs/machine_graphs/machine_{machine_name}_yearly_comparison.png'
+        plt.savefig(graph_filename_year, transparent=True)
+        plt.close()
+
+        # Append the filenames and machine name to the list
+        machine_graphs.append({
+            'machine_name': machine_name,
+            'graph_filename_day': graph_filename_day,
+            'graph_filename_month': graph_filename_month,
+            'graph_filename_year': graph_filename_year,
+        })
+
+    # Render the HTML template with the list of filenames and machine names
+    return render(request, 'all_machine_graphs.html', {'machine_graphs': machine_graphs})

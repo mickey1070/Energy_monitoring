@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Machine Consumption Graph</title>
+</head>
+<body>
+
+<h1>Machine Consumption Graph</h1>
+
+{% if graph_filename %}
+    <img src="{{ graph_filename }}" alt="Machine Consumption Graph">
+{% else %}
+    <p>No graph available</p>
+{% endif %}
+
+</body>
+</html>

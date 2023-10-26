@@ -32,3 +32,20 @@ class EnergySlabRate(models.Model):
     def __str__(self):
         return f"Slab Rate: {self.start_usage} - {self.end_usage} @ {self.rate_per_unit} per unit"
 	
+
+class MonthlyEnergyCost(models.Model):
+    month = models.DateField(unique=True)
+    total_cost = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f"Cost for {self.month.strftime('%B %Y')}"
+    
+
+class EnergyCost(models.Model):
+    date = models.DateField()
+    cost_day = models.FloatField()
+    cost_month = models.FloatField()
+    cost_year = models.FloatField()
+    cost_previous_day = models.FloatField()
+    cost_previous_month = models.FloatField()
+    cost_previous_year = models.FloatField()	
