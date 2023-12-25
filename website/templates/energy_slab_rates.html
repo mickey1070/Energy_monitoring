@@ -1,66 +1,64 @@
 {% extends 'base.html' %}
 {% load static%}
 {% block content %}
-{% if user.is_authenticated %}
-<body>
-    <h1>Energy Slab Rates</h1>
+  {% if user.is_authenticated %}
+    <body>
+      <h1>Energy Slab Rates</h1>
 
-    <!-- Add New Slab Rate Form -->
-    <h2>Add New Slab Rate:</h2>
-    <form method="post">
+      <!-- Add New Slab Rate Form -->
+      <h2>Add New Slab Rate:</h2>
+      <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
         <button type="submit">Add Rate</button>
-    </form>
+      </form>
 
-    <!-- Existing Slab Rates -->
-    <h2>Existing Slab Rates:</h2>
-    <table>
+      <!-- Existing Slab Rates -->
+      <h2>Existing Slab Rates:</h2>
+      <table>
         <thead>
-            <tr>
-                <th>Start Usage</th>
-                <th>End Usage</th>
-                <th>Rate per Unit</th>
-                <th>Actions</th>
-            </tr>
+          <tr>
+            <th>Start Usage</th>
+            <th>End Usage</th>
+            <th>Rate per Unit</th>
+            <th>Actions</th>
+          </tr>
         </thead>
         <tbody>
-            {% for slab_rate in slab_rates %}
-                <tr>
-                    <td>{{ slab_rate.start_usage }}</td>
-                    <td>{{ slab_rate.end_usage }}</td>
-                    <td>{{ slab_rate.rate_per_unit }}</td>
-                    <td>
-                        <a href="{% url 'edit_energy_slab_rate' slab_rate.id %}">Edit</a>
-                        <a href="{% url 'delete_energy_slab_rate' slab_rate.id %}">Delete</a>
-                    </td>
-                </tr>
-            {% empty %}
-                <tr>
-                    <td colspan="4">No slab rates available.</td>
-                </tr>
-            {% endfor %}
+          {% for slab_rate in slab_rates %}
+            <tr>
+              <td>{{ slab_rate.start_usage }}</td>
+              <td>
+                {% if slab_rate.end_usage == positive_infinity %}
+                  Infinity
+                {% else %}
+                  {{ slab_rate.end_usage }}
+                {% endif %}
+              </td>
+              <td>{{ slab_rate.rate_per_unit }}</td>
+              <td>
+                <a href="{% url 'edit_energy_slab_rate' slab_rate.id %}">Edit</a>
+                <a href="{% url 'delete_energy_slab_rate' slab_rate.id %}">Delete</a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="4">No slab rates available.</td>
+            </tr>
+          {% endfor %}
         </tbody>
-    </table>
-   
-    <!-- Edit Slab Rate Form (Hidden by Default) -->
-   <!--  <h2>Edit Slab Rate:</h2>
-    <form method="post" id="edit-slab-rate" style="display: none;">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Update Rate</button>
-    </form> -->
+      </table>
 
-    <!-- JavaScript to Toggle Edit Form -->
-    <script>
+      <!-- JavaScript to Toggle Edit Form -->
+      <script>
         // Function to toggle the edit form visibility
         function toggleEditForm(slabRateId) {
-            const editForm = document.getElementById('edit-slab-rate');
-            const formAction = editForm.action;
-            editForm.action = formAction.replace(/\d+/, slabRateId);
-            editForm.style.display = 'block';
+          const editForm = document.getElementById('edit-slab-rate');
+          const formAction = editForm.action;
+          editForm.action = formAction.replace(/\d+/, slabRateId);
+          editForm.style.display = 'block';
         }
-    </script>
-</body>
-{% endif %}
+      </script>
+    </body>
+  {% endif %}
 {% endblock %}

@@ -59,3 +59,7 @@ class EnergySlabRateForm(forms.ModelForm):
     class Meta:
         model = EnergySlabRate
         fields = ['start_usage', 'end_usage', 'rate_per_unit']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['end_usage'].required = False

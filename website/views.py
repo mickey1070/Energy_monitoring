@@ -127,16 +127,18 @@ def calculate_cost(consumption):
         end = slab_rate.end_usage
         rate = Decimal(str(slab_rate.rate_per_unit))  # Ensure rate is Decimal
 
-        if end is None:
+        if end is None or end == float('inf'):
             cost += (Decimal(str(consumption)) - start) * rate
             break
         elif consumption <= end:
             cost += (Decimal(str(consumption)) - start + Decimal('1.0')) * rate
             break
         else:
-            cost += (end - start + Decimal('1.0')) * rate
+            cost += (Decimal(str(end)) - start + Decimal('1.0')) * rate
 
     return float(cost)
+
+
 
 def calculate_yearly_energy_cost():
     today = date.today()
@@ -174,7 +176,7 @@ def Dashboard(request):
 	)
 
 	start_of_month = datetime(today.year, today.month, 1)
-	end_of_month = start_of_month.replace(day=1, month=today.month + 1) - timedelta(days=1)
+	end_of_month = start_of_month.replace(day=1, month=today.month ) - timedelta(days=1)
 	data_month = energy.objects.filter(
 	    Q(timestamp__gte=start_of_month) &
 	    Q(timestamp__lte=end_of_month)
@@ -345,9 +347,13 @@ def energy_slab_rates(request):
             form.save()
             return redirect('energy_slab_rates')
 
+    # Set positive_infinity in the context
+    positive_infinity = float('inf')
+
     context = {
         'slab_rates': slab_rates,
         'form': form,
+        'positive_infinity': positive_infinity,
     }
 
     return render(request, 'energy_slab_rates.html', context)
