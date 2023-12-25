@@ -25,12 +25,12 @@ class energy(models.Model):
 	  return f"{self.status} at {self.timestamp}"
 	
 class EnergySlabRate(models.Model):
-    start_usage = models.FloatField()
-    end_usage = models.FloatField(null=True, blank=True)
-    rate_per_unit = models.FloatField()
+    start_usage = models.DecimalField(max_digits=10, decimal_places=2)
+    end_usage = models.DecimalField(max_digits=10, decimal_places=2,default=float('inf'))
+    rate_per_unit = models.DecimalField(max_digits=5, decimal_places=2)
 
     def __str__(self):
-        return f"{self.start_usage} - {self.end_usage} : {self.rate_per_unit}"
+        return f"Slab Rate: {self.start_usage} - {self.end_usage} @ {self.rate_per_unit} per unit"
 	
 
 class MonthlyEnergyCost(models.Model):

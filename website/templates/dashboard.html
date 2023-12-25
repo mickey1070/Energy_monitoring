@@ -1,73 +1,41 @@
 {% extends 'base.html' %}
-{% load static%}
+{% load static %}
+
 {% block content %}
-{% if user.is_authenticated %}
-<link rel="stylesheet" href="{% static 'CSS/Dashboard.css' %}" type="text/css" />
-<div class="container">
-    <!-- <p>Average Cost for the Year (Available Data): ₹{{ average_cost_year|floatformat:"2" }}</p>
-    <p>Predicted Total Cost for the Year: ₹{{ predicted_total_cost_year|floatformat:"2" }}</p> -->
-
-    <div class="Daily">
+  {% if user.is_authenticated %}
+    <link rel="stylesheet" href="{% static 'CSS/Dashboard.css' %}" type="text/css" />
+    <div class="container">
+      <div class="Daily">
         <Div class="D_Text">DAILY</Div>
-        <div class="D_value">₹ {{ total_cost_day|floatformat:2 }}</div>
-        <div class="D_symbol">
-            {% if cost_comparison_symbol == 'red.png' %}
-                <img src="{% static 'Images/Arrows/red.png' %}" alt="red">
-            {% elif cost_comparison_symbol == 'green.png' %} 
-                <img src="{% static 'Images/Arrows/green.png' %}" alt="green">
-            {% else %}
-                <img src="{% static 'Images/Arrows/equal.png' %}" class="D_equal" alt="Equals Symbol">
-            {% endif %}
-        </div>
-        
-    </div>
-    <div class="Monthly">
-        <Div class="M_Text">MONTHLY</Div>
-        <div class="M_value">₹ {{ total_cost_month|floatformat:2 }}</div>
-        <div class="M_symbol">
-            {% if cost_comparison_symbol_month == 'red.png' %}
-                <img class="test" src="{% static 'Images/Arrows/red.png' %}" alt="red">
-            {% elif cost_comparison_symbol_month == 'green.png' %} 
-                <img src="{% static 'Images/Arrows/green.png' %}" alt="green">
-            {% else %}
-                <img src="{% static 'Images/Arrows/equal.png' %}" alt="equal">
-            {% endif %}
-        </div>
-    </div>
-    <div class="Yearly">
-        <Div class="Y_Text">YEARLY</Div>
-        <div class="Y_value">₹ {{ total_cost_year|floatformat:2 }}</div>
-        <div class="Y_symbol">
-            {% if cost_comparison_symbol_year == 'red.png' %}
-                <img src="{% static 'Images/Arrows/red.png' %}" alt="red">
-            {% elif cost_comparison_symbol_year == 'green.png' %} 
-                <img src="{% static 'Images/Arrows/green.png' %}" alt="green">
-            {% else %}
-                <img src="{% static 'Images/Arrows/equal.png' %}" alt="Equals Symbol">
-            {% endif %}
-        </div>
-    </div>
-    
-    <div class="Line_chart">
-        <div class="Line_text">LINE CONSUMPTION</div>
-        <img src="{% static 'Graphs/status_vs_consumption.png' %}" class="graph"alt="Status vs. Sum of Consumption"> 
-    </div>
+        <div class="D_value">{{ total_consumption_day|floatformat:2 }} kWh</div>
+      </div>
 
-     <div class="Cost_tile">
+      <div class="Monthly">
+        <Div class="M_Text">MONTHLY</Div>
+        <div class="M_value">{{ total_consumption_month|floatformat:2 }} kWh</div>
+      </div>
+
+      <div class="Yearly">
+        <Div class="Y_Text">YEARLY</Div>
+        <div class="Y_value">{{ total_consumption_year|floatformat:2 }} kWh</div>
+      </div>
+
+      <div class="Line_chart">
+        <div class="Line_text">LINE CONSUMPTION</div>
+        <img src="{% static 'Graphs/status_vs_consumption.png' %}" class="graph" alt="Status vs. Sum of Consumption">
+      </div>
+
+      <div class="Cost_tile">
         <div class="cost_title">COST</div>
-        <div class="Energy_cost">TOTAL ENERGY COST</div> 
-        <div class="T_energY_cost">₹ {{ total_cost_month|floatformat:2 }}</div>
+        <div class="Energy_cost">TOTAL ENERGY COST</div>
+        <div class="T_energY_cost">{{ total_consumption_year|floatformat:2 }}</div>  <!-- Placeholder for total energy cost -->
         <div class="split_line_1"></div>
-        <div class="Average_cost">AVERAGE COST</div> 
-        <div class="A_energY_cost">₹ {{ average_monthly_cost|floatformat:2 }}</div>  
+        <div class="Average_cost">AVERAGE COST</div>
+        <div class="A_energY_cost">{{ average_energy_cost|floatformat:2 }}</div>  <!-- Placeholder for average energy cost -->
         <div class="split_line_2"></div>
         <div class="Predicted_yearly">Predicted Yearly Cost</div>
-        <div class="P_energY_cost">₹ {{ average_monthly_cost|floatformat:2 }}</div>
+        <div class="P_energY_cost">{{ predicted_yearly_cost|floatformat:2 }}</div>  <!-- Placeholder for predicted yearly cost -->
+      </div>
     </div>
-    <!-- <div class="Alert_box">
-        <div class="Alert_text">ALERT</div>
-    </div> -->
-</div>
-
-{% endif %}
+  {% endif %}
 {% endblock %}

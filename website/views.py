@@ -18,6 +18,8 @@ import base64
 import os
 from django.conf import settings
 from django.utils import timezone
+from django.db.models.functions import TruncMonth
+from django.utils.dateparse import parse_date
 
 # Create your views here.
 
@@ -118,9 +120,8 @@ slab_rates = {
     }
 }
 
-def calculate_cost(consumption):
+def calculate_cost(consumption, slab_rates):
     cost = Decimal('0.0')  # Initialize cost as a Decimal
-    slab_rates = EnergySlabRate.objects.all().order_by('start_usage')
 
     for slab_rate in slab_rates:
         start = Decimal(str(slab_rate.start_usage))  # Ensure start is Decimal
@@ -138,16 +139,7 @@ def calculate_cost(consumption):
 
     return float(cost)
 
-
-
-def calculate_yearly_energy_cost():
-    today = date.today()
-    first_day_current_year = today.replace(month=1, day=1)
-
-    data_year = energy.objects.filter(
-        Q(timestamp__year=first_day_current_year.year)
-    )
-
+def calculate_yearly_energy_cost(data_year, slab_rates):
     total_consumption_year = sum(entry.value for entry in data_year)
     total_cost_year = calculate_cost(total_consumption_year, slab_rates)
 
@@ -156,136 +148,111 @@ def calculate_yearly_energy_cost():
     remaining_months = 12 - len(data_year)
     predicted_total_cost_year = total_cost_year + (average_monthly_cost * remaining_months)
 
-    # Fetch monthly energy cost data for the current year
-    monthly_costs = MonthlyEnergyCost.objects.filter(
-        month__year=first_day_current_year.year
-    ).order_by('month')
+    return total_cost_year, predicted_total_cost_year
 
-    # You now have yearly and monthly cost data
-    return total_cost_year, predicted_total_cost_year, monthly_costs
 
 def Dashboard(request):
-	today = date.today()
-	previous_day = today - timedelta(days=1)
-	first_day_current_year = today.replace(month=1, day=1)
+    today = date.today()
+    previous_day = today - timedelta(days=1)
+    first_day_current_year = today.replace(month=1, day=1)
 
-	data_day = energy.objects.filter(
-	    timestamp__year=today.year,
-	    timestamp__month=today.month,
-	    timestamp__day=today.day
-	)
+    # Calculate today's consumption
+    first_entry_day = energy.objects.filter(
+        timestamp__year=today.year,
+        timestamp__month=today.month,
+        timestamp__day=today.day
+    ).order_by('timestamp').first()
 
-	start_of_month = datetime(today.year, today.month, 1)
-	end_of_month = start_of_month.replace(day=1, month=today.month ) - timedelta(days=1)
-	data_month = energy.objects.filter(
-	    Q(timestamp__gte=start_of_month) &
-	    Q(timestamp__lte=end_of_month)
-	)
+    last_entry_day = energy.objects.filter(
+        timestamp__year=today.year,
+        timestamp__month=today.month,
+        timestamp__day=today.day
+    ).order_by('-timestamp').first()
 
-	start_of_year = datetime(today.year, 1, 1)
-	end_of_year = datetime(today.year, 12, 31)
-	data_year = energy.objects.filter(
-	    Q(timestamp__gte=start_of_year) &
-	    Q(timestamp__lte=end_of_year)
-	)
+    if first_entry_day and last_entry_day:
+        today_consumption = last_entry_day.value - first_entry_day.value
+    else:
+        today_consumption = 0
 
-	data_previous_day = energy.objects.filter(
-	    timestamp__year=previous_day.year,
-	    timestamp__month=previous_day.month,
-	    timestamp__day=previous_day.day
-	)
+    # Fetch the first entry for the month
+    start_of_month = datetime(today.year, today.month, 1)
+    first_entry_month = energy.objects.filter(
+        timestamp__gte=start_of_month,
+        timestamp__lte=start_of_month.replace(month=(today.month + 1) % 12, day=1) - timedelta(days=1)
+    ).order_by('timestamp').first()
 
-	first_day_previous_month = today.replace(day=1) - timedelta(days=1)
-	start_of_previous_month = first_day_previous_month.replace(day=1)
-	data_previous_month = energy.objects.filter(
-	    timestamp__year=start_of_previous_month.year,
-	    timestamp__month=start_of_previous_month.month
-	)
+    # Get the last entry from the 'value' column
+    last_entry_month = energy.objects.latest('timestamp')
 
-	data_previous_year = energy.objects.filter(
-	    timestamp__year=first_day_current_year.year - 1
-	)
+    # Calculate monthly consumption
+    if first_entry_month and last_entry_month:
+        monthly_consumption = last_entry_month.value - first_entry_month.value
+    else:
+        monthly_consumption = 0
 
-	slab_rates = EnergySlabRate.objects.all().order_by('start_usage')
+    # Debugging: Print first and last entries, and monthly consumption
+    print("Today's Consumption:", today_consumption)
+    print("First Entry (Month):", first_entry_month)
+    print("Last Entry (Month):", last_entry_month)
+    print("Monthly Consumption:", monthly_consumption)
 
-	total_consumption_day = float(sum(entry.value for entry in data_day))
-	total_cost_day = calculate_cost(total_consumption_day)
+    # Calculate total consumption for the day, month, and year
+    total_consumption_day = float(today_consumption) if today_consumption else 0
 
-	total_consumption_month = float(sum(entry.value for entry in data_month))
-	total_cost_month = calculate_cost(total_consumption_month)
+    data_month = energy.objects.filter(
+        Q(timestamp__gte=start_of_month) &
+        Q(timestamp__lte=start_of_month.replace(month=(today.month + 1) % 12, day=1) - timedelta(days=1))
+    )
 
-	total_consumption_year = float(sum(entry.value for entry in data_year))
-	total_cost_year = calculate_cost(total_consumption_year)
+    total_consumption_month = float(sum(entry.value for entry in data_month))
 
-	total_consumption_previous_day = float(sum(entry.value for entry in data_previous_day))
-	total_cost_previous_day = calculate_cost(total_consumption_previous_day)
+    start_of_year = datetime(today.year, 1, 1)
+    end_of_year = datetime(today.year, 12, 31)
+    data_year = energy.objects.filter(
+        Q(timestamp__gte=start_of_year) &
+        Q(timestamp__lte=end_of_year)
+    )
 
-	total_consumption_previous_month = float(sum(entry.value for entry in data_previous_month))
-	total_cost_previous_month = calculate_cost(total_consumption_previous_month)
+    total_consumption_year = float(sum(entry.value for entry in data_year))
 
-	total_consumption_previous_year = float(sum(entry.value for entry in data_previous_year))
-	total_cost_previous_year = calculate_cost(total_consumption_previous_year)
+    # Fetch previous day, month, and year data
+    data_previous_day = energy.objects.filter(
+        timestamp__year=previous_day.year,
+        timestamp__month=previous_day.month,
+        timestamp__day=previous_day.day
+    )
 
-	# Compare today's cost with previous day's cost and output a symbol
-	if total_cost_day > total_cost_previous_day:
-		cost_comparison_symbol = 'red.png'
-	elif total_cost_day < total_cost_previous_day:
-		cost_comparison_symbol = 'green.png'
-	else:
-		cost_comparison_symbol = 'equal.png'
+    first_day_previous_month = today.replace(day=1) - timedelta(days=1)
+    start_of_previous_month = first_day_previous_month.replace(day=1)
+    data_previous_month = energy.objects.filter(
+        timestamp__year=start_of_previous_month.year,
+        timestamp__month=start_of_previous_month.month
+    )
 
-	 # Determine the cost comparison symbol for year vs. previous year
-	if total_cost_year > total_cost_previous_year:
-		cost_comparison_symbol_year = 'red.png'
-	elif total_cost_year < total_cost_previous_year:
-		cost_comparison_symbol_year = 'green.png'
-	else:
-		cost_comparison_symbol_year = 'equals.png'
+    data_previous_year = energy.objects.filter(
+        timestamp__year=first_day_current_year.year - 1
+    )
 
-# Determine the cost comparison symbol for month vs. previous month
-	if total_cost_month > total_cost_previous_month:
-		cost_comparison_symbol_month = 'red.png'
-	elif total_cost_month < total_cost_previous_month:
-		cost_comparison_symbol_month = 'green.png'
-	else:
-		cost_comparison_symbol_month = 'equals.png'
+    total_consumption_previous_day = float(sum(entry.value for entry in data_previous_day))
+    total_consumption_previous_month = float(sum(entry.value for entry in data_previous_month))
+    total_consumption_previous_year = float(sum(entry.value for entry in data_previous_year))
 
+    # Get the last entry from the 'value' column
+    last_entry = energy.objects.latest('timestamp').value
 
-	data = energy.objects.all()
-    # Create a Pandas DataFrame from the data
-	df = pd.DataFrame(data.values())	
-	# Group data by 'status' and calculate the sum of 'value' for each status
-	grouped_data = df.groupby('status')['value'].sum().reset_index()	
-	# Prepare data for plotting
-	statuses = grouped_data['status']
-	consumption_sum = grouped_data['value']	
-	# Create a bar graph
-	plt.figure(figsize=(8, 6))
-	plt.bar(statuses, consumption_sum)
-	plt.xlabel('Status')
-	plt.ylabel('Sum of Consumption (kW)')
-	#plt.title('Status vs. Sum of Consumption')
-	plt.xticks(rotation=45)
-	plt.tight_layout()	
-	
-	# Save the plot as an image
-	plt.savefig('static/Graphs/status_vs_consumption.png',transparent=True	)  # Media directory	
+    # Your plotting and other code...
 
-	context = {
+    context = {
         'total_consumption_day': total_consumption_day,
-        'total_cost_day': total_cost_day,
-        'total_cost_month': total_cost_month,	
-        'total_cost_year': total_cost_year,
-		""" 'average_cost_year': average_monthly_cost * 12,  # Average cost for a full year
-    	'predicted_total_cost_year': predicted_total_cost_year,
-		'average_monthly_cost':average_monthly_cost, """
-		'cost_comparison_symbol':cost_comparison_symbol,
-		'cost_comparison_symbol_year': cost_comparison_symbol_year,
-		'cost_comparison_symbol_month': cost_comparison_symbol_month,
+        'total_consumption_month': total_consumption_month,
+        'total_consumption_year': last_entry,
+        'total_consumption_previous_day': total_consumption_previous_day,
+        'total_consumption_previous_month': total_consumption_previous_month,
+        'total_consumption_previous_year': total_consumption_previous_year,
+        'last_entry': last_entry,
     }
 
-	return render(request, 'Dashboard.html',context)
-
+    return render(request, 'Dashboard.html', context)
 
 def report(request):
     if request.method == 'POST':
