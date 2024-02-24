@@ -151,6 +151,7 @@ def calculate_yearly_energy_cost(data_year, slab_rates):
     return total_cost_year, predicted_total_cost_year
 
 
+
 def Dashboard(request):
     today = date.today()
     previous_day = today - timedelta(days=1)
@@ -177,11 +178,11 @@ def Dashboard(request):
     # Fetch the first entry for the month
     start_of_month = datetime(today.year, today.month, 1)
     first_entry_month = energy.objects.filter(
-        timestamp__gte=start_of_month,
-        timestamp__lte=start_of_month.replace(month=(today.month + 1) % 12, day=1) - timedelta(days=1)
+        timestamp__year=today.year,
+        timestamp__month=today.month
     ).order_by('timestamp').first()
 
-    # Get the last entry from the 'value' column
+    # Get the last entry from the 'value' column for the month
     last_entry_month = energy.objects.latest('timestamp')
 
     # Calculate monthly consumption
@@ -197,14 +198,7 @@ def Dashboard(request):
     print("Monthly Consumption:", monthly_consumption)
 
     # Calculate total consumption for the day, month, and year
-    total_consumption_day = float(today_consumption) if today_consumption else 0
-
-    data_month = energy.objects.filter(
-        Q(timestamp__gte=start_of_month) &
-        Q(timestamp__lte=start_of_month.replace(month=(today.month + 1) % 12, day=1) - timedelta(days=1))
-    )
-
-    total_consumption_month = float(sum(entry.value for entry in data_month))
+    total_consumption_day = today_consumption if today_consumption else 0
 
     start_of_year = datetime(today.year, 1, 1)
     end_of_year = datetime(today.year, 12, 31)
@@ -213,7 +207,21 @@ def Dashboard(request):
         Q(timestamp__lte=end_of_year)
     )
 
-    total_consumption_year = float(sum(entry.value for entry in data_year))
+    # Get the first entry of the year
+    first_entry_year = energy.objects.filter(
+        timestamp__year=start_of_year.year
+    ).order_by('timestamp').first()
+
+    # Get the last entry of the year
+    last_entry_year = energy.objects.filter(
+        timestamp__year=end_of_year.year
+    ).order_by('-timestamp').first()
+
+    # Calculate yearly consumption
+    if first_entry_year and last_entry_year:
+        total_consumption_year = last_entry_year.value - first_entry_year.value
+    else:
+        total_consumption_year = 0
 
     # Fetch previous day, month, and year data
     data_previous_day = energy.objects.filter(
@@ -240,12 +248,10 @@ def Dashboard(request):
     # Get the last entry from the 'value' column
     last_entry = energy.objects.latest('timestamp').value
 
-    # Your plotting and other code...
-
     context = {
         'total_consumption_day': total_consumption_day,
-        'total_consumption_month': total_consumption_month,
-        'total_consumption_year': last_entry,
+        'total_consumption_month': monthly_consumption,
+        'total_consumption_year': total_consumption_year,
         'total_consumption_previous_day': total_consumption_previous_day,
         'total_consumption_previous_month': total_consumption_previous_month,
         'total_consumption_previous_year': total_consumption_previous_year,
