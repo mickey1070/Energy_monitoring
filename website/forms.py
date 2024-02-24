@@ -1,7 +1,7 @@
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django import forms
-from .models import Record,EnergySlabRate
+from .models import Record
 
 class SignUpForm(UserCreationForm):
 	email = forms.EmailField(label="", widget=forms.TextInput(attrs={'class':'form-control', 'placeholder':'Email Address'}))
@@ -53,13 +53,3 @@ class AddRecordForm(forms.ModelForm):
 class DateRangeForm(forms.Form):
     start_date = forms.DateField(label='Start Date')
     end_date = forms.DateField(label='End Date')
-
-
-class EnergySlabRateForm(forms.ModelForm):
-    class Meta:
-        model = EnergySlabRate
-        fields = ['start_usage', 'end_usage', 'rate_per_unit']
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['end_usage'].required = False
