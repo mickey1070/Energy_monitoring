@@ -2,7 +2,9 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from .forms import SignUpForm
-from .models import energy
+from .models import energy,Generation
+import matplotlib
+matplotlib.use('Agg')
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
@@ -15,11 +17,13 @@ from decimal import Decimal
 from django.http import HttpResponse
 from io import BytesIO
 import base64
-import os
+import os,io
 from django.conf import settings
 from django.utils import timezone
 from django.db.models.functions import TruncMonth
 from django.utils.dateparse import parse_date
+import urllib, base64
+from django.http import HttpResponse
 
 # Create your views here.
 
@@ -212,3 +216,119 @@ def Dashboard(request):
 
     return render(request, 'Dashboard.html', context)
 
+
+def machine(request):
+    if request.method == 'POST':
+        selected_machine = request.POST.get('machine')
+        selected_option = request.POST.get('options')
+
+        # Fetch all entries for the selected machine
+        machine_entries = energy.objects.filter(machine=selected_machine)
+
+        # Initialize variables to store data for comparison
+        current_data = []
+        previous_data = []
+
+        if selected_option == 'DvsD':
+            # Calculate current day and previous day
+            today = datetime.now().date()
+            previous_day = today - timedelta(days=1)
+
+            # Filter entries for the current day and previous day
+            current_day_entries = machine_entries.filter(timestamp__date=today)
+            previous_day_entries = machine_entries.filter(timestamp__date=previous_day)
+
+            # Get values for the current day and previous day
+            current_data = [entry.value for entry in current_day_entries]
+            previous_data = [entry.value for entry in previous_day_entries]
+
+            # Plot the comparison bar graph
+            plt.bar(['Current Day', 'Previous Day'], [sum(current_data), sum(previous_data)])
+            plt.xlabel('Time')
+            plt.ylabel('Value')
+            plt.title(f'{selected_machine} - DvsD Comparison')
+            
+            # Convert plot to bytes
+            buffer = io.BytesIO()
+            plt.savefig(buffer, format='png')
+            plt.close()
+            buffer.seek(0)
+            # Encode plot bytes as base64 string
+            plot_data = base64.b64encode(buffer.getvalue()).decode()
+            buffer.close()
+
+        elif selected_option == 'MvsM':
+            # Calculate current month and previous month
+            today = datetime.now().date()
+            previous_month = today.replace(day=1) - timedelta(days=1)
+            current_month_start = today.replace(day=1)
+
+            # Filter entries for the current month and previous month
+            current_month_entries = machine_entries.filter(
+                timestamp__year=today.year,
+                timestamp__month=today.month
+            )
+            previous_month_entries = machine_entries.filter(
+                timestamp__year=previous_month.year,
+                timestamp__month=previous_month.month
+            )
+
+            # Get values for the current month and previous month
+            current_data = [entry.value for entry in current_month_entries]
+            previous_data = [entry.value for entry in previous_month_entries]
+
+            # Plot the comparison bar graph
+            plt.bar(['Current Month', 'Previous Month'], [sum(current_data), sum(previous_data)])
+            
+            plt.title(f'{selected_machine} - MvsM Comparison')
+            
+            # Convert plot to bytes
+            buffer = io.BytesIO()
+            plt.savefig(buffer, format='png')
+            plt.close()
+            buffer.seek(0)
+            # Encode plot bytes as base64 string
+            plot_data = base64.b64encode(buffer.getvalue()).decode()
+            buffer.close()
+
+        elif selected_option == 'YvsY':
+            # Calculate current year and previous year
+            today = datetime.now().date()
+            previous_year = today.replace(year=today.year - 1)
+
+            # Filter entries for the current year and previous year
+            current_year_entries = machine_entries.filter(timestamp__year=today.year)
+            previous_year_entries = machine_entries.filter(timestamp__year=previous_year.year)
+
+            # Get values for the current year and previous year
+            current_data = [entry.value for entry in current_year_entries]
+            previous_data = [entry.value for entry in previous_year_entries]
+
+            # Plot the comparison bar graph
+            plt.bar(['Current Year', 'Previous Year'], [sum(current_data), sum(previous_data)])
+            plt.xlabel('Time')
+            plt.ylabel('Value')
+            plt.title(f'{selected_machine} - YvsY Comparison')
+            
+            # Convert plot to bytes
+            buffer = io.BytesIO()
+            plt.savefig(buffer, format='png')
+            plt.close()
+            buffer.seek(0)
+            # Encode plot bytes as base64 string
+            plot_data = base64.b64encode(buffer.getvalue()).decode()
+            buffer.close()
+
+        else:
+            return render(request, 'machine.html', {'error': 'Invalid option selected'})
+
+        # Construct HTML snippet to display the graph
+        html_plot = f'<img src="data:image/png;base64,{plot_data}" />'
+        context = {'graph': html_plot, 'machines': energy.objects.values_list('machine', flat=True).distinct(),
+                   'options': ['DvsD', 'MvsM', 'YvsY']}
+        return render(request, 'machine.html', context)
+
+    else:
+        machines = energy.objects.values_list('machine', flat=True).distinct()
+        options = ['DvsD', 'MvsM', 'YvsY']
+        return render(request, 'machine.html', {'machines': machines, 'options': options})
