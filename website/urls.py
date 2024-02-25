@@ -10,6 +10,7 @@ urlpatterns = [
     path('register/', views.register_user, name='register_user'),
     path('Dashboard/', views.Dashboard, name='Dashboard'),
     path('machine/', views.machine, name='machine'),
+    path('energy_metrics/', views.energy_metrics_view, name='energy_metrics'),
    
 ]
 

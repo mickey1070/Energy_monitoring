@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+    {% if user.is_authenticated %}
+        <link rel="stylesheet" href="{% static 'CSS/metrics.css' %}" type="text/css" />
+        <div class="readings">
+            <b>READINGS</b>
+            <img src="data:image/png;base64,{{ plot_data }}" alt="Last 24 Hours Energy Readings">
+        </div>
+        <br>
+        <div class="last-24">
+            <b>LAST 24-HOURS</b>
+            <div id="circle1">
+                <b>STANDBY</b>
+                <b>{{ standby_energy }}</b>
+            </div>
+            <div id="circle2">
+                <b>PEAK</b>
+                <b>{{ peak_current }}</b>
+            </div>
+            <div id="circle3">
+                <b>CURRENT</b>
+                <b>{{ current_consumption }}</b>
+            </div>
+            <div id="circle4">
+                <b>TODAY</b>
+                <b>{{ today_consumption }}</b>
+            </div>
+        </div>
+        <!-- <br><br><br>
+        <h2>Standby Energy: {{ standby_energy }}</h2>
+        <h2>Peak Current: {{ peak_current }}</h2>
+        <h2>Current Consumption: {{ current_consumption }}</h2>
+        <h2>Today's Consumption: {{ today_consumption }}</h2>
+        <h2>Last 24 Hours Energy Readings</h2>
+        
+         -->
+    {% endif %}
+{% endblock %}
+        
