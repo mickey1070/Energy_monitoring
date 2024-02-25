@@ -33,6 +33,23 @@ class Generation(models.Model):
     def __str__(self):
         return f"{self.device} - {self.timestamp}"
 
+	
+# class EnergySlabRate(models.Model):
+#     start_usage = models.DecimalField(max_digits=10, decimal_places=2)
+#     end_usage = models.DecimalField(max_digits=10, decimal_places=2,default=float('inf'))
+#     rate_per_unit = models.DecimalField(max_digits=5, decimal_places=2)
+
+#     def __str__(self):
+#         return f"Slab Rate: {self.start_usage} - {self.end_usage} @ {self.rate_per_unit} per unit"
+	
+
+# class MonthlyEnergyCost(models.Model):
+#     month = models.DateField(unique=True)
+#     total_cost = models.DecimalField(max_digits=10, decimal_places=2)
+
+#     def __str__(self):
+#         return f"Cost for {self.month.strftime('%B %Y')}"
+    
 
 class EnergyCost(models.Model):
     date = models.DateField()
