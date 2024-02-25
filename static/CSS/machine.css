@@ -18,39 +18,24 @@ body{
     font-weight: 700;
     line-height: normal;
     position: absolute;
-    top: 3rem;
-    left: 54.813rem;
+    top: 3.5rem;
+    left: 30rem;
     border-color: transparent;
 }
 
 
 
 
-.machine-dropdown {
-    position: relative;
-    font-family: Inter;
-    width:10rem;
-    position: relative;
-    left: 8rem;
-  }
-
 .option-dropdown {
   position: relative;
   font-family: Inter;
   width:10rem;
   position: relative;
-  top:-5.5rem;
-  left: 30rem;
+  bottom: 5rem;
+  left: 010rem;
 }
 
-.machine-dropdown label[for="machine"]{
-    
-    position: relative;
-    font-style: BOLD;
-    top:3.5rem;
-    left: -8rem;
-    
-}
+
 
 .option-dropdown label[for="options"]{
     
@@ -61,9 +46,9 @@ body{
     
 }
 
-.machine-dropdown select,
+
 .option-dropdown select {
-  display: none; /* Hide original SELECT element */
+  display: none; 
 }
 
 .select-selected {
@@ -71,7 +56,7 @@ body{
   
 }
 
-/* Style the arrow inside the select element: */
+
 .select-selected:after {
   position: absolute;
   content: "";
@@ -84,14 +69,14 @@ body{
   
 }
 
-/* Point the arrow upwards when the select box is open (active): */
+
 .select-selected.select-arrow-active:after {
   border-color: transparent transparent #fff transparent;
   top: 7px;
   
 }
 
-/* style the items (options), including the selected item: */
+
 .select-items div,.select-selected {
   color: #ffffff;
   padding: 8px 16px;
@@ -101,7 +86,7 @@ body{
   
 }
 
-/* Style items (options): */
+
 .select-items {
   position: absolute;
   background-color: DodgerBlue;
@@ -112,7 +97,6 @@ body{
   
 }
 
-/* Hide the items when the select box is closed: */
 .select-hide {
   display: none;
   

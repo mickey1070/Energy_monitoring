@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+    {% if user.is_authenticated %}
+        <h1>Generate Report</h1>
+        <form method="POST">
+            {% csrf_token %}
+            <label for="start_date">Start Date:</label>
+            <input type="date" id="start_date" name="start_date"><br><br>
+            <label for="end_date">End Date:</label>
+            <input type="date" id="end_date" name="end_date"><br><br>
+            <button type="submit">Download CSV</button>
+        </form>
+    {% endif %}
+{% endblock %}
+    

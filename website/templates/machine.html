@@ -3,21 +3,12 @@
 
 {% block content %}
     {% if user.is_authenticated %}
-        
         <link rel="stylesheet" href="{% static 'CSS/machine.css' %}" type="text/css" />
         <body>
-            <!-- <h1 id="heading">GRAPHICAL REPRESENTATION</h1> -->
-            
+            <!-- <h1 id="heading">Machine Data Comparison</h1> -->
+            <br><br><br><br>
             <form method="POST">
                 {% csrf_token %}
-                <div class="machine-dropdown">
-                    <label for="machine" >Select Machine:</label>
-                    <select name="machine" id="machine">
-                        {% for machine in machines %}
-                        <option value="{{ machine }}">{{ machine }}</option>
-                        {% endfor %}
-                    </select><br><br>
-                </div>
                 <div class="option-dropdown">
                     <label for="options">Select Comparison:</label>
                     <select name="options" id="options">
@@ -31,14 +22,11 @@
             </form>
         
             {% if graph %}
-            <div id="graph-bro">
+            <div id="graph-container">
                 {{ graph|safe }}
             </div>
             {% endif %}
         </body>
         <script src="{% static 'JavaScript/machine.js' %}"></script>
-
-      
     {% endif %}
 {% endblock %}
-    

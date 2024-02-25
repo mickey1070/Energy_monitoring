@@ -24,6 +24,7 @@ from django.utils import timezone
 import calendar
 from django.db.models import Sum
 from dateutil.relativedelta import relativedelta
+import csv
 
 # Create your views here.
 
@@ -223,11 +224,10 @@ def Dashboard(request):
 
 def machine(request):
     if request.method == 'POST':
-        selected_machine = request.POST.get('machine')
         selected_option = request.POST.get('options')
 
-        # Fetch all entries for the selected machine
-        machine_entries = energy.objects.filter(machine=selected_machine)
+        # Fetch all entries from the Main model
+        main_entries = Main.objects.all()
 
         # Initialize variables to store data for comparison
         current_data = []
@@ -239,8 +239,8 @@ def machine(request):
             previous_day = today - timedelta(days=1)
 
             # Filter entries for the current day and previous day
-            current_day_entries = machine_entries.filter(timestamp__date=today)
-            previous_day_entries = machine_entries.filter(timestamp__date=previous_day)
+            current_day_entries = main_entries.filter(timestamp__date=today)
+            previous_day_entries = main_entries.filter(timestamp__date=previous_day)
 
             # Get values for the current day and previous day
             current_data = [entry.value for entry in current_day_entries]
@@ -250,7 +250,7 @@ def machine(request):
             plt.bar(['Current Day', 'Previous Day'], [sum(current_data), sum(previous_data)])
             plt.xlabel('Time')
             plt.ylabel('Value')
-            plt.title(f'{selected_machine} - DvsD Comparison')
+            plt.title('DvsD Comparison')
             
             # Convert plot to bytes
             buffer = io.BytesIO()
@@ -268,11 +268,11 @@ def machine(request):
             current_month_start = today.replace(day=1)
 
             # Filter entries for the current month and previous month
-            current_month_entries = machine_entries.filter(
+            current_month_entries = main_entries.filter(
                 timestamp__year=today.year,
                 timestamp__month=today.month
             )
-            previous_month_entries = machine_entries.filter(
+            previous_month_entries = main_entries.filter(
                 timestamp__year=previous_month.year,
                 timestamp__month=previous_month.month
             )
@@ -284,7 +284,7 @@ def machine(request):
             # Plot the comparison bar graph
             plt.bar(['Current Month', 'Previous Month'], [sum(current_data), sum(previous_data)])
             
-            plt.title(f'{selected_machine} - MvsM Comparison')
+            plt.title('MvsM Comparison')
             
             # Convert plot to bytes
             buffer = io.BytesIO()
@@ -301,8 +301,8 @@ def machine(request):
             previous_year = today.replace(year=today.year - 1)
 
             # Filter entries for the current year and previous year
-            current_year_entries = machine_entries.filter(timestamp__year=today.year)
-            previous_year_entries = machine_entries.filter(timestamp__year=previous_year.year)
+            current_year_entries = main_entries.filter(timestamp__year=today.year)
+            previous_year_entries = main_entries.filter(timestamp__year=previous_year.year)
 
             # Get values for the current year and previous year
             current_data = [entry.value for entry in current_year_entries]
@@ -312,7 +312,7 @@ def machine(request):
             plt.bar(['Current Year', 'Previous Year'], [sum(current_data), sum(previous_data)])
             plt.xlabel('Time')
             plt.ylabel('Value')
-            plt.title(f'{selected_machine} - YvsY Comparison')
+            plt.title('YvsY Comparison')
             
             # Convert plot to bytes
             buffer = io.BytesIO()
@@ -328,14 +328,12 @@ def machine(request):
 
         # Construct HTML snippet to display the graph
         html_plot = f'<img src="data:image/png;base64,{plot_data}" />'
-        context = {'graph': html_plot, 'machines': energy.objects.values_list('machine', flat=True).distinct(),
-                   'options': ['DvsD', 'MvsM', 'YvsY']}
+        context = {'graph': html_plot, 'options': ['DvsD', 'MvsM', 'YvsY']}
         return render(request, 'machine.html', context)
 
     else:
-        machines = energy.objects.values_list('machine', flat=True).distinct()
         options = ['DvsD', 'MvsM', 'YvsY']
-        return render(request, 'machine.html', {'machines': machines, 'options': options})
+        return render(request, 'machine.html', {'options': options})
     
 def calculate_energy_metrics():
     # Get the latest entry from the Main model
@@ -513,3 +511,26 @@ def energy_metrics_view(request):
         'plot_data': plot_data,
         'plot_data_7_days': plot_data_7_days,
     })
+
+
+def report_view(request):
+    if request.method == 'POST':
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('end_date')
+
+        # Query Main model for data within the specified date range
+        data = Main.objects.filter(timestamp__range=[start_date, end_date])
+
+        # Create a CSV response
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="main_data.csv"'
+
+        # Write data to CSV
+        writer = csv.writer(response)
+        writer.writerow(['Timestamp', 'Value'])
+        for entry in data:
+            writer.writerow([entry.timestamp, entry.value])
+
+        return response
+
+    return render(request, 'report.html')
