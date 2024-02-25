@@ -4,6 +4,7 @@ from django.contrib import messages
 from .forms import SignUpForm
 from .models import energy,Main
 import matplotlib
+import io
 matplotlib.use('Agg')
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -11,24 +12,19 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from django.shortcuts import render
 from datetime import date, datetime, timedelta
 from django.db.models import Q
-import csv
-from django.http import HttpResponse
-from decimal import Decimal
-from django.http import HttpResponse
 from io import BytesIO
 import base64
-import os,io
 from django.conf import settings
 from django.utils import timezone
-from django.db.models.functions import TruncMonth
 from django.utils.dateparse import parse_date
-import urllib, base64
 from django.http import HttpResponse
 from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error
 import numpy as np
 from django.utils import timezone
-import json
+import calendar
+from django.db.models import Sum
+from dateutil.relativedelta import relativedelta
+
 # Create your views here.
 
 def login_user(request):
@@ -112,114 +108,118 @@ def Dashboard(request):
 
 
 
+def plot_yearly_data(data):
+    # Get the timestamp for 12 months ago from today
+    twelve_months_ago = datetime.now() - timedelta(days=365)
+
+    # Filter data for the last 12 months
+    data_last_12_months = data.filter(timestamp__gte=twelve_months_ago)
+
+    # Extract timestamps and energy values
+    timestamps = [entry.timestamp for entry in data_last_12_months]
+    energy_values = [entry.value for entry in data_last_12_months]
+
+    # Convert timestamps to months
+    months = [timestamp.strftime('%b') for timestamp in timestamps]
+
+    # Group energy values by month
+    monthly_energy = {}
+    for month, value in zip(months, energy_values):
+        if month in monthly_energy:
+            monthly_energy[month] += value
+        else:
+            monthly_energy[month] = value
+
+    # Create sorted list of months
+    sorted_months = sorted(monthly_energy.keys(), key=lambda x: list(calendar.month_abbr).index(x))
+
+    # Plot the data
+    plt.figure(figsize=(9, 5))
+    plt.bar(sorted_months, [monthly_energy[month] for month in sorted_months], color='skyblue')
+
+    plt.xlabel('Month')
+    plt.ylabel('Total Energy Consumption (kWh)')
+    plt.title('Total Energy Consumption for Last 12 Months')
+    plt.xticks(rotation=45)
+    plt.grid(False)
+    plt.tight_layout()
+
+    # Convert plot to bytes
+    buffer = BytesIO()
+    plt.savefig(buffer, format='png', transparent=True)
+    buffer.seek(0)
+    plot_data = base64.b64encode(buffer.getvalue()).decode()
+    buffer.close()
+
+    return plot_data
+
 def Dashboard(request):
-    today = date.today()
-    previous_day = today - timedelta(days=1)
-    first_day_current_year = today.replace(month=1, day=1)
+    today = datetime.now()
 
-    # Calculate today's consumption
-    first_entry_day = energy.objects.filter(
-        timestamp__year=today.year,
-        timestamp__month=today.month,
-        timestamp__day=today.day
-    ).order_by('timestamp').first()
+    # Calculate today's consumption in kWh
+    start_of_day = today.replace(hour=0, minute=0, second=0, microsecond=0)
+    today_consumption_wh = Main.objects.filter(timestamp__gte=start_of_day).aggregate(Sum('value'))['value__sum']
+    today_consumption_wh = today_consumption_wh or 0
+    today_consumption_kwh = today_consumption_wh / 1000  # Convert Wh to kWh
 
-    last_entry_day = energy.objects.filter(
-        timestamp__year=today.year,
-        timestamp__month=today.month,
-        timestamp__day=today.day
-    ).order_by('-timestamp').first()
+    # Calculate monthly consumption in kWh
+    start_of_month = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    monthly_consumption_wh = Main.objects.filter(timestamp__gte=start_of_month).aggregate(Sum('value'))['value__sum']
+    monthly_consumption_wh = monthly_consumption_wh or 0
+    monthly_consumption_kwh = monthly_consumption_wh / 1000  # Convert Wh to kWh
 
-    if first_entry_day and last_entry_day:
-        today_consumption = last_entry_day.value - first_entry_day.value
-    else:
-        today_consumption = 0
-
-    # Fetch the first entry for the month
-    start_of_month = datetime(today.year, today.month, 1)
-    first_entry_month = energy.objects.filter(
-        timestamp__year=today.year,
-        timestamp__month=today.month
-    ).order_by('timestamp').first()
-
-    # Get the last entry from the 'value' column for the month
-    last_entry_month = energy.objects.latest('timestamp')
-
-    # Calculate monthly consumption
-    if first_entry_month and last_entry_month:
-        monthly_consumption = last_entry_month.value - first_entry_month.value
-    else:
-        monthly_consumption = 0
-
-    # Debugging: Print first and last entries, and monthly consumption
-    print("Today's Consumption:", today_consumption)
-    print("First Entry (Month):", first_entry_month)
-    print("Last Entry (Month):", last_entry_month)
-    print("Monthly Consumption:", monthly_consumption)
-
-    # Calculate total consumption for the day, month, and year
-    total_consumption_day = today_consumption if today_consumption else 0
-
-    start_of_year = datetime(today.year, 1, 1)
-    end_of_year = datetime(today.year, 12, 31)
-    data_year = energy.objects.filter(
-        Q(timestamp__gte=start_of_year) &
-        Q(timestamp__lte=end_of_year)
-    )
-
-    # Get the first entry of the year
-    first_entry_year = energy.objects.filter(
-        timestamp__year=start_of_year.year
-    ).order_by('timestamp').first()
-
-    # Get the last entry of the year
-    last_entry_year = energy.objects.filter(
-        timestamp__year=end_of_year.year
-    ).order_by('-timestamp').first()
-
-    # Calculate yearly consumption
-    if first_entry_year and last_entry_year:
-        total_consumption_year = last_entry_year.value - first_entry_year.value
-    else:
-        total_consumption_year = 0
+    # Calculate yearly consumption in kWh
+    start_of_year = today.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+    yearly_consumption_wh = Main.objects.filter(timestamp__gte=start_of_year).aggregate(Sum('value'))['value__sum']
+    yearly_consumption_wh = yearly_consumption_wh or 0
+    yearly_consumption_kwh = yearly_consumption_wh / 1000  # Convert Wh to kWh
 
     # Fetch previous day, month, and year data
-    data_previous_day = energy.objects.filter(
-        timestamp__year=previous_day.year,
-        timestamp__month=previous_day.month,
-        timestamp__day=previous_day.day
-    )
+    previous_day = today - timedelta(days=1)
+    previous_month = today - relativedelta(months=1)
+    previous_year = today - relativedelta(years=1)
 
-    first_day_previous_month = today.replace(day=1) - timedelta(days=1)
-    start_of_previous_month = first_day_previous_month.replace(day=1)
-    data_previous_month = energy.objects.filter(
-        timestamp__year=start_of_previous_month.year,
-        timestamp__month=start_of_previous_month.month
-    )
+    total_consumption_previous_day_wh = Main.objects.filter(
+        timestamp__gte=start_of_day - timedelta(days=1),
+        timestamp__lt=start_of_day
+    ).aggregate(Sum('value'))['value__sum']
+    total_consumption_previous_day_wh = total_consumption_previous_day_wh or 0
+    total_consumption_previous_day_kwh = total_consumption_previous_day_wh / 1000  # Convert Wh to kWh
 
-    data_previous_year = energy.objects.filter(
-        timestamp__year=first_day_current_year.year - 1
-    )
+    total_consumption_previous_month_wh = Main.objects.filter(
+        timestamp__gte=start_of_month - relativedelta(months=1),
+        timestamp__lt=start_of_month
+    ).aggregate(Sum('value'))['value__sum']
+    total_consumption_previous_month_wh = total_consumption_previous_month_wh or 0
+    total_consumption_previous_month_kwh = total_consumption_previous_month_wh / 1000  # Convert Wh to kWh
 
-    total_consumption_previous_day = float(sum(entry.value for entry in data_previous_day))
-    total_consumption_previous_month = float(sum(entry.value for entry in data_previous_month))
-    total_consumption_previous_year = float(sum(entry.value for entry in data_previous_year))
+    total_consumption_previous_year_wh = Main.objects.filter(
+        timestamp__gte=start_of_year - relativedelta(years=1),
+        timestamp__lt=start_of_year
+    ).aggregate(Sum('value'))['value__sum']
+    total_consumption_previous_year_wh = total_consumption_previous_year_wh or 0
+    total_consumption_previous_year_kwh = total_consumption_previous_year_wh / 1000  # Convert Wh to kWh
 
     # Get the last entry from the 'value' column
-    last_entry = energy.objects.latest('timestamp').value
+    last_entry_wh = Main.objects.latest('timestamp').value
+    last_entry_kwh = last_entry_wh / 1000  # Convert Wh to kWh
+
+    # Plot the yearly data
+    data_year = Main.objects.filter(timestamp__year=today.year)
+    plot_data_year = plot_yearly_data(data_year)
 
     context = {
-        'total_consumption_day': total_consumption_day,
-        'total_consumption_month': monthly_consumption,
-        'total_consumption_year': total_consumption_year,
-        'total_consumption_previous_day': total_consumption_previous_day,
-        'total_consumption_previous_month': total_consumption_previous_month,
-        'total_consumption_previous_year': total_consumption_previous_year,
-        'last_entry': last_entry,
+        'total_consumption_day': today_consumption_kwh,
+        'total_consumption_month': monthly_consumption_kwh,
+        'total_consumption_year': yearly_consumption_kwh,
+        'total_consumption_previous_day': total_consumption_previous_day_kwh,
+        'total_consumption_previous_month': total_consumption_previous_month_kwh,
+        'total_consumption_previous_year': total_consumption_previous_year_kwh,
+        'last_entry': last_entry_kwh,
+        'plot_data_year': plot_data_year,
     }
 
     return render(request, 'Dashboard.html', context)
-
 
 def machine(request):
     if request.method == 'POST':
@@ -338,6 +338,12 @@ def machine(request):
         return render(request, 'machine.html', {'machines': machines, 'options': options})
     
 def calculate_energy_metrics():
+    # Get the latest entry from the Main model
+    latest_entry = Main.objects.latest('timestamp')
+    
+    # Extract latest energy value
+    current_consumption = latest_entry.value
+
     # Get the timestamp for 24 hours ago in UTC timezone
     start_time = timezone.now() - timedelta(hours=24)
     
@@ -362,9 +368,8 @@ def calculate_energy_metrics():
     # Use the model to predict standby energy at 24 hours
     standby_energy = max(0, model.predict([[24]])[0])  # Ensure standby energy is non-negative
     
-    # Calculate peak current consumption, current consumption, and today's consumption
+    # Calculate peak current consumption and today's consumption
     peak_current = max(energy_values)
-    current_consumption = energy_values[-1]
     today_consumption = sum(energy_values)
 
     return standby_energy, peak_current, current_consumption, today_consumption
@@ -410,6 +415,68 @@ def plot_last_24_hours(data):
     
     return plot_data
 
+def plot_last_7_days(data):
+    # Initialize lists to store energy consumption for day and night for each of the last 7 days
+    days = []
+    day_consumption = []
+    night_consumption = []
+
+    # Get the timestamp for 7 days ago
+    start_time = timezone.now() - timedelta(days=7)
+
+    # Iterate over the last 7 days
+    for i in range(7):
+        # Get the start and end timestamp for the current day
+        day_start = start_time + timedelta(days=i)
+        day_end = day_start + timedelta(days=1)
+
+        # Filter data for the current day
+        day_data = data.filter(timestamp__gte=day_start, timestamp__lt=day_end)
+
+        # Initialize variables to store energy consumption during day and night
+        day_energy = 0
+        night_energy = 0
+
+        # Iterate over data for the current day
+        for entry in day_data:
+            # Assuming night time is from 6:00 PM to 6:00 AM
+            if entry.timestamp.hour < 6 or entry.timestamp.hour >= 18:
+                night_energy += entry.value
+            else:
+                day_energy += entry.value
+
+        # Append energy consumption for the current day to respective lists
+        days.append(day_start.strftime('%Y-%m-%d'))
+        day_consumption.append(day_energy)
+        night_consumption.append(night_energy)
+
+    # Convert lists to numpy arrays for plotting
+    days = np.array(days)
+    day_consumption = np.array(day_consumption)
+    night_consumption = np.array(night_consumption)
+
+    # Create stacked bar graph
+    plt.figure(figsize=(8, 3.3))
+    plt.bar(days, day_consumption, label='Day', color='lightblue')
+    plt.bar(days, night_consumption, bottom=day_consumption, label='Night', color='darkblue')
+
+    plt.xlabel('Date')
+    plt.ylabel('Energy Consumption')
+    # plt.title('Energy Consumption During Day and Night (Last 7 Days)')
+    # plt.xticks(rotation=45)
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+
+    # Convert plot to bytes with transparent background
+    buffer = BytesIO()
+    plt.savefig(buffer, format='png', transparent=True)
+    buffer.seek(0)
+    plot_data = base64.b64encode(buffer.getvalue()).decode()
+    buffer.close()
+
+    return plot_data
+
 
 
 def energy_metrics_view(request):
@@ -428,6 +495,9 @@ def energy_metrics_view(request):
     
     # Plot the last 24 hours of energy readings
     plot_data = plot_last_24_hours(data)
+
+    # Plot the last 7 days of energy consumption
+    plot_data_7_days = plot_last_7_days(Main.objects.all())  # Assuming all data is used for last 7 days
     
     # Cast values to integers
     standby_energy = int(standby_energy)
@@ -440,5 +510,6 @@ def energy_metrics_view(request):
         'peak_current': peak_current,
         'current_consumption': current_consumption,
         'today_consumption': today_consumption,
-        'plot_data': plot_data
+        'plot_data': plot_data,
+        'plot_data_7_days': plot_data_7_days,
     })

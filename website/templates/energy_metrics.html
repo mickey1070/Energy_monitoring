@@ -28,6 +28,11 @@
                 <b>{{ today_consumption }}</b>
             </div>
         </div>
+        <br>
+        <div class="last_7">
+            <b>WEEK READINGS</b>
+            <img src="data:image/png;base64,{{ plot_data_7_days }}" alt="Last 24 Hours Energy Readings">
+        </div>
         <!-- <br><br><br>
         <h2>Standby Energy: {{ standby_energy }}</h2>
         <h2>Peak Current: {{ peak_current }}</h2>
@@ -36,6 +41,7 @@
         <h2>Last 24 Hours Energy Readings</h2>
         
          -->
+        
     {% endif %}
 {% endblock %}
         

@@ -26,6 +26,27 @@ left: 0rem;
     bottom:1rem
 }
 
+.last_7{
+    width: 52rem;
+    height: 22rem;
+    flex-shrink: 0;
+    border-radius: 10px;
+    background: #E1E0E1;
+    box-shadow: 0px 6px 10px 0px rgba(0, 0, 0, 0.25);
+    position: relative;
+    bottom:21rem;
+    left: 58rem;
+}
+
+.last_7 b{
+    font-family: Inter;
+    position: relative;
+    left:20px;
+    top: 20px;
+    font-size: 20px;
+}
+
+
 .last-24{
     width: 55rem;
     height: 22rem;

@@ -20,20 +20,21 @@
         <div class="Y_value">{{ total_consumption_year|floatformat:2 }} kWh</div>
       </div>
 
+      <!-- Line chart for yearly consumption -->
       <div class="Line_chart">
-        <div class="Line_text">LINE CONSUMPTION</div>
-        <img src="{% static 'Graphs/status_vs_consumption.png' %}" class="graph" alt="Status vs. Sum of Consumption">
+        <div class="Line_text">YEARLY CONSUMPTION</div>
+        <img src="data:image/png;base64,{{ plot_data_year }}" class="graph" alt="Yearly Consumption">
       </div>
 
       <div class="Cost_tile">
-        <div class="cost_title">COST</div>
-        <div class="Energy_cost">TOTAL ENERGY COST</div>
+        <div class="cost_title">CONSUMPTION</div>
+        <div class="Energy_cost">TOTAL ENERGY </div>
         <div class="T_energY_cost">{{ total_consumption_year|floatformat:2 }}</div>  <!-- Placeholder for total energy cost -->
         <div class="split_line_1"></div>
-        <div class="Average_cost">AVERAGE COST</div>
+        <div class="Average_cost">AVERAGE </div>
         <div class="A_energY_cost">{{ average_energy_cost|floatformat:2 }}</div>  <!-- Placeholder for average energy cost -->
         <div class="split_line_2"></div>
-        <div class="Predicted_yearly">Predicted Yearly Cost</div>
+        <div class="Predicted_yearly">Predicted Yearly </div>
         <div class="P_energY_cost">{{ predicted_yearly_cost|floatformat:2 }}</div>  <!-- Placeholder for predicted yearly cost -->
       </div>
     </div>
