@@ -4,6 +4,8 @@
 {% block content %}
     {% if user.is_authenticated %}
         <h1>Generate Report</h1>
+        <link rel="stylesheet" href="{% static 'CSS/report.css' %}" type="text/css" />
+        <div class="report"></div>
         <form method="POST">
             {% csrf_token %}
             <label for="start_date">Start Date:</label>

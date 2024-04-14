@@ -31,11 +31,14 @@
         <div class="Energy_cost">TOTAL ENERGY </div>
         <div class="T_energY_cost">{{ total_consumption_year|floatformat:2 }}</div>  <!-- Placeholder for total energy cost -->
         <div class="split_line_1"></div>
-        <div class="Average_cost">AVERAGE </div>
-        <div class="A_energY_cost">{{ average_energy_cost|floatformat:2 }}</div>  <!-- Placeholder for average energy cost -->
+        <div class="Average_cost">Predicted monthly </div>
+        <div class="A_energY_cost">{{ forecast_monthly |floatformat:2}}</div>  <!-- Placeholder for predicted monthly consumption -->
         <div class="split_line_2"></div>
         <div class="Predicted_yearly">Predicted Yearly </div>
-        <div class="P_energY_cost">{{ predicted_yearly_cost|floatformat:2 }}</div>  <!-- Placeholder for predicted yearly cost -->
+        <div class="P_energY_cost">{{ forecast_yearly|floatformat:2 }}</div>  <!-- Placeholder for predicted yearly consumption -->
+      </div>
+      <div class="Alert_tile">
+        
       </div>
     </div>
   {% endif %}
