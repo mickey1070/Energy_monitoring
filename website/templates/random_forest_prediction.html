@@ -1,0 +1,36 @@
+<!-- random_forest_prediction.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+    <h1>Random Forest Prediction</h1>
+    
+    {% if error %}
+    <p style="color: red;">{{ error }}</p>
+    {% endif %}
+    
+    <form method="POST">
+        {% csrf_token %}
+        <label for="timestamp">Enter Timestamp (YYYY-MM-DD):</label>
+        <input type="text" id="timestamp" name="timestamp">
+        <button type="submit">Predict</button>
+    </form>
+    
+    {% if plot_data %}
+    <div>
+        <h2>Actual vs Predicted Data for Last Week</h2>
+        <img src="data:image/png;base64,{{ plot_data }}" alt="Plot">
+    </div>
+    {% endif %}
+    
+    {% if result is not None %}
+    <h2>Prediction Result:</h2>
+    {% if result %}
+    <p>True</p>
+    {% else %}
+    <p>False</p>
+    {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

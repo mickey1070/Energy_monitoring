@@ -5,7 +5,7 @@
     {% if user.is_authenticated %}
         <link rel="stylesheet" href="{% static 'CSS/machine.css' %}" type="text/css" />
         <body>
-            <!-- <h1 id="heading">Machine Data Comparison</h1> -->
+            
             <br><br><br><br>
             <form method="POST">
                 {% csrf_token %}
@@ -26,7 +26,16 @@
                 {{ graph|safe }}
             </div>
             {% endif %}
+            
+            {% if random_forest_prediction %}
+            <div id="random-forest-prediction">
+                <h3>Random Forest Prediction:</h3>
+                <p>{{ random_forest_prediction }}</p>
+            </div>
+            {% endif %}
         </body>
         <script src="{% static 'JavaScript/machine.js' %}"></script>
+
+       
     {% endif %}
 {% endblock %}

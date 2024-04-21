@@ -12,6 +12,7 @@ urlpatterns = [
     path('machine/', views.machine, name='machine'),
     path('energy_metrics/', views.energy_metrics_view, name='energy_metrics'),
     path('report/', views.report_view, name='report'),
+    path('random_forest_prediction/',views.random_forest_prediction,name='random_forest_prediction')
    
 ]
 
